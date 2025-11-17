@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 
 <html
   lang="en"
@@ -1489,11 +1489,11 @@
                           <div class="d-flex">
                             <div class="flex-shrink-0 me-3">
                               <div class="avatar">
-                                <img src="{{ asset('assets/img/avatars/1.png') }}" alt class="rounded-circle" />
+                                <img src="{{ asset('assets/') }}img/avatars/1.png" alt class="rounded-circle" />
                               </div>
                             </div>
                             <div class="flex-grow-1">
-                              <h6 class="small mb-1">Congratulation Lettie 🎉</h6>
+                              <h6 class="small mb-1">Congratulation Lettie ðŸŽ‰</h6>
                               <small class="mb-1 d-block text-body">Won the monthly best seller gold badge</small>
                               <small class="text-body-secondary">1h ago</small>
                             </div>
@@ -1533,11 +1533,11 @@
                           <div class="d-flex">
                             <div class="flex-shrink-0 me-3">
                               <div class="avatar">
-                                <img src="{{ asset('assets/img/avatars/2.png') }}" alt class="rounded-circle" />
+                                <img src="{{ asset('assets/') }}img/avatars/2.png" alt class="rounded-circle" />
                               </div>
                             </div>
                             <div class="flex-grow-1">
-                              <h6 class="mb-1 small">New Message ✉️</h6>
+                              <h6 class="mb-1 small">New Message âœ‰ï¸</h6>
                               <small class="mb-1 d-block text-body">You have new message from Natalie</small>
                               <small class="text-body-secondary">1h ago</small>
                             </div>
@@ -1561,7 +1561,7 @@
                               </div>
                             </div>
                             <div class="flex-grow-1">
-                              <h6 class="mb-1 small">Whoo! You have new order 🛒</h6>
+                              <h6 class="mb-1 small">Whoo! You have new order ðŸ›’</h6>
                               <small class="mb-1 d-block text-body">ACME Inc. made new order $1,154</small>
                               <small class="text-body-secondary">1 day ago</small>
                             </div>
@@ -1579,11 +1579,11 @@
                           <div class="d-flex">
                             <div class="flex-shrink-0 me-3">
                               <div class="avatar">
-                                <img src="{{ asset('assets/img/avatars/9.png') }}" alt class="rounded-circle" />
+                                <img src="{{ asset('assets/') }}img/avatars/9.png" alt class="rounded-circle" />
                               </div>
                             </div>
                             <div class="flex-grow-1">
-                              <h6 class="mb-1 small">Application has been approved 🚀</h6>
+                              <h6 class="mb-1 small">Application has been approved ðŸš€</h6>
                               <small class="mb-1 d-block text-body"
                                 >Your ABC project application has been approved.</small
                               >
@@ -1627,7 +1627,7 @@
                           <div class="d-flex">
                             <div class="flex-shrink-0 me-3">
                               <div class="avatar">
-                                <img src="{{ asset('assets/img/avatars/5.png') }}" alt class="rounded-circle" />
+                                <img src="{{ asset('assets/') }}img/avatars/5.png" alt class="rounded-circle" />
                               </div>
                             </div>
                             <div class="flex-grow-1">
@@ -1649,7 +1649,7 @@
                           <div class="d-flex">
                             <div class="flex-shrink-0 me-3">
                               <div class="avatar">
-                                <img src="{{ asset('assets/img/avatars/6.png') }}" alt class="rounded-circle" />
+                                <img src="{{ asset('assets/') }}img/avatars/6.png" alt class="rounded-circle" />
                               </div>
                             </div>
                             <div class="flex-grow-1">
@@ -1713,7 +1713,7 @@
                     href="javascript:void(0);"
                     data-bs-toggle="dropdown">
                     <div class="avatar avatar-online">
-                      <img src="{{ asset('assets/img/avatars/1.png') }}" alt class="rounded-circle" />
+                      <img src="{{ asset('assets/') }}img/avatars/1.png" alt class="rounded-circle" />
                     </div>
                   </a>
                   <ul class="dropdown-menu dropdown-menu-end">
@@ -1722,7 +1722,7 @@
                         <div class="d-flex align-items-center">
                           <div class="flex-shrink-0 me-2">
                             <div class="avatar avatar-online">
-                              <img src="{{ asset('assets/img/avatars/1.png') }}" alt class="rounded-circle" />
+                              <img src="{{ asset('assets/') }}img/avatars/1.png" alt class="rounded-circle" />
                             </div>
                           </div>
                           <div class="flex-grow-1">
@@ -1839,7 +1839,7 @@
                             </div>
                             <div class="col-lg-5 col-md-3 col-12 order-1 order-md-2 my-4 my-md-0 text-center">
                               <img
-                                src="{{ asset('assets/img/illustrations/card-website-analytics-1.png') }}"
+                                src="{{ asset('assets/') }}img/illustrations/card-website-analytics-1.png"
                                 alt="Website Analytics"
                                 height="150"
                                 class="card-website-analytics-img" />
@@ -1884,7 +1884,7 @@
                           </div>
                           <div class="col-lg-5 col-md-3 col-12 order-1 order-md-2 my-4 my-md-0 text-center">
                             <img
-                              src="{{ asset('assets/img/illustrations/card-website-analytics-2.png') }}"
+                              src="{{ asset('assets/') }}img/illustrations/card-website-analytics-2.png"
                               alt="Website Analytics"
                               height="150"
                               class="card-website-analytics-img" />
@@ -1928,7 +1928,7 @@
                           </div>
                           <div class="col-lg-5 col-md-3 col-12 order-1 order-md-2 my-4 my-md-0 text-center">
                             <img
-                              src="{{ asset('assets/img/illustrations/card-website-analytics-3.png') }}"
+                              src="{{ asset('assets/') }}img/illustrations/card-website-analytics-3.png"
                               alt="Website Analytics"
                               height="150"
                               class="card-website-analytics-img" />
@@ -2664,11 +2664,11 @@
                 <div
                   class="footer-container d-flex align-items-center justify-content-between py-4 flex-md-row flex-column">
                   <div class="text-body">
-                    ©
+                    Â©
                     <script>
                       document.write(new Date().getFullYear());
                     </script>
-                    , made with ❤️ by <a href="https://pixinvent.com" target="_blank" class="footer-link">Pixinvent</a>
+                    , made with â¤ï¸ by <a href="https://pixinvent.com" target="_blank" class="footer-link">Pixinvent</a>
                   </div>
                   <div class="d-none d-lg-inline-block">
                     <a href="https://themeforest.net/licenses/standard" class="footer-link me-4" target="_blank"
