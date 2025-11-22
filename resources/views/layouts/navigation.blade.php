@@ -15,6 +15,15 @@
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
+
+                    @if(Auth::user()->hasRole('Admin'))
+                    <x-nav-link :href="route('parking.management.index')" :active="request()->routeIs('parking.management.*')">
+                        {{ __('Manajemen Parkir') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('parking.transactions.index')" :active="request()->routeIs('parking.transactions.*')">
+                        {{ __('Transaksi Parkir') }}
+                    </x-nav-link>
+                    @endif
                 </div>
             </div>
 
@@ -70,6 +79,15 @@
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
+
+            @if(Auth::user()->hasRole('Admin'))
+            <x-responsive-nav-link :href="route('parking.management.index')" :active="request()->routeIs('parking.management.*')">
+                {{ __('Manajemen Parkir') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('parking.transactions.index')" :active="request()->routeIs('parking.transactions.*')">
+                {{ __('Transaksi Parkir') }}
+            </x-responsive-nav-link>
+            @endif
         </div>
 
         <!-- Responsive Settings Options -->
