@@ -118,8 +118,9 @@
         @endif
     </div>
 
+    @if(Auth::user()->hasRole(['Admin', 'Petugas']))
     <div class="row">
-        <!-- QR Code Display -->
+        <!-- QR Code Display - only for admin/petugas -->
         <div class="col-lg-6 mb-4">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
@@ -145,7 +146,7 @@
                             <p class="text-danger">Tidak ada QR code tersedia</p>
                         @endif
                     </div>
-                    
+
                     @if($qrCodeModel ?? null)
                         <p class="mb-2">
                             <small class="text-muted">Berlaku sampai: {{ $qrCodeModel->expires_at->format('H:i:s') }}</small>
@@ -159,13 +160,15 @@
                             <p class="text-success fw-bold">QR Code aktif</p>
                         @endif
                     @endif
-                    
+
                     <a href="{{ route('qr-code.show') }}" class="btn btn-outline-primary">
                         Lihat QR Code Saya
                     </a>
                 </div>
             </div>
         </div>
+    </div>
+    @endif
         
 
     <!-- Entry/Exit History -->
@@ -200,7 +203,7 @@
                                 <span class="badge bg-success">Masuk</span>
                             </td>
                             <td>{{ $entry->entry_time->format('d/m/Y H:i:s') }}</td>
-                            <td>{{ $entry->entry_location ?? 'N/A' }}</td>
+                            <td>{{ $entry->kode_parkir }}<br><small class="text-muted">Kode untuk keluar</small></td>
                             <td>N/A</td>
                             <td>
                                 @if($entry->parkingExit)
@@ -294,23 +297,29 @@
     });
 
     function scanQRCode(qrCode, type) {
-        const scanBtn = type === 'entry' ? 
-            document.getElementById('scanEntryBtn') : 
+        const scanBtn = type === 'entry' ?
+            document.getElementById('scanEntryBtn') :
             document.getElementById('scanExitBtn');
-        
+
         scanBtn.disabled = true;
         scanBtn.innerHTML = '<i class="ti ti-loader ti-spin ti-xs"></i> Scanning...';
         scanBtn.classList.add('disabled');
-        
+
+        let requestData = {};
+        if (type === 'entry') {
+            requestData = { qr_code: qrCode };
+        } else {
+            // Untuk exit, kita kirimkan kode parkir
+            requestData = { kode_parkir: qrCode };
+        }
+
         fetch(type === 'entry' ? '{{ route("parking.scan.entry") }}' : '{{ route("parking.scan.exit") }}', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
             },
-            body: JSON.stringify({
-                qr_code: qrCode
-            })
+            body: JSON.stringify(requestData)
         })
         .then(response => response.json())
         .then(data => {
@@ -331,8 +340,8 @@
         .finally(() => {
             scanBtn.disabled = false;
             scanBtn.classList.remove('disabled');
-            scanBtn.innerHTML = type === 'entry' ? 
-                '<i class="ti ti-login"></i> Scan untuk Masuk' : 
+            scanBtn.innerHTML = type === 'entry' ?
+                '<i class="ti ti-login"></i> Scan untuk Masuk' :
                 '<i class="ti ti-logout"></i> Scan untuk Keluar';
         });
     }

@@ -41,12 +41,7 @@ class CustomLoginController extends Controller
             ]);
         }
 
-        // Cek apakah user sudah verified
-        if ($user->email_verified_at === null) {
-            throw ValidationException::withMessages([
-                'login' => ['Akun Anda belum diverifikasi.'],
-            ]);
-        }
+        // Kita tidak menggunakan verifikasi email lagi, jadi abaikan pengecekan ini
 
         // Login user
         Auth::login($user, $request->filled('remember'));
@@ -59,12 +54,6 @@ class CustomLoginController extends Controller
      */
     private function findUserByLoginField($loginField)
     {
-        // Cari berdasarkan email (sebagai fallback)
-        $user = User::where('email', $loginField)->first();
-        if ($user) {
-            return $user;
-        }
-
         // Cari berdasarkan identity_number (NIP/NUP/NIM)
         $user = User::where('identity_number', $loginField)->first();
         if ($user) {

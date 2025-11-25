@@ -45,6 +45,56 @@ class QRCodeService
     }
 
     /**
+     * Generate QR code umum harian untuk semua pengguna
+     *
+     * @param string|null $date Tanggal untuk QR code (default hari ini)
+     * @return QrCode
+     */
+    public function generateDailyQRCodeUmum(string $date = null): QrCode
+    {
+        $date = $date ? Carbon::parse($date) : Carbon::today();
+
+        // Cek apakah QR code umum sudah ada untuk tanggal ini
+        $qrCode = QrCode::whereNull('user_id')  // QR code umum tidak memiliki user_id spesifik
+            ->whereDate('date', $date)
+            ->first();
+
+        if ($qrCode) {
+            return $qrCode;
+        }
+
+        // Generate QR code unik untuk umum
+        $code = $this->generateUniqueCodeForGeneral($date);
+
+        // Buat QR code baru tanpa user_id spesifik
+        $qrCode = QrCode::create([
+            'user_id' => null, // Ini adalah QR code umum
+            'code' => $code,
+            'date' => $date,
+            'expires_at' => $date->endOfDay(), // Kadaluarsa di akhir hari
+            'is_used' => false,
+        ]);
+
+        return $qrCode;
+    }
+
+    /**
+     * Generate kode unik untuk QR code umum
+     *
+     * @param Carbon $date
+     * @return string
+     */
+    private function generateUniqueCodeForGeneral(Carbon $date): string
+    {
+        // Buat kode unik untuk QR code umum
+        $prefix = 'GENERAL_' . $date->format('Y-m-d');
+        $random = Str::random(16);
+
+        // Gabungkan dan hash untuk membuat kode dengan panjang konsisten
+        return hash('sha256', $prefix . '_' . $random);
+    }
+
+    /**
      * Generate kode unik untuk pengguna dan tanggal
      *
      * @param User $user
@@ -62,7 +112,7 @@ class QRCodeService
     }
 
     /**
-     * Validasi QR code untuk masuk
+     * Validasi QR code untuk masuk - bisa digunakan oleh siapa saja
      *
      * @param string $code
      * @return QrCode|null
@@ -72,7 +122,6 @@ class QRCodeService
         $qrCode = QrCode::where('code', $code)
             ->whereDate('date', Carbon::today())
             ->where('is_used', false)
-            ->with('user')
             ->first();
 
         return $qrCode;

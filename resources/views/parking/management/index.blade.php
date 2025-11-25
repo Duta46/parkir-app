@@ -203,6 +203,63 @@
         </div>
     </div>
 
+    <!-- Section untuk Generate QR Code Umum -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Generate Barcode Umum</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="alert alert-info">
+                        <i class="ti ti-info-circle"></i>
+                        <strong>Barcode Umum:</strong> Barcode ini bisa digunakan oleh semua pengguna (mahasiswa, dosen, pegawai, admin, petugas) untuk masuk dan keluar parkir. Berlaku hanya untuk hari ini.
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12 text-center">
+                    <button id="generateQrUmumBtn" class="btn btn-success btn-lg">
+                        <i class="ti ti-qrcode"></i> Generate Barcode Umum Hari Ini
+                    </button>
+                    <div id="qrCodeUmumContainer" class="mt-3" style="display: none;">
+                        <div id="qrCodeUmumImage"></div>
+                        <p class="mt-2"><small class="text-muted">Barcode di atas berlaku hanya untuk hari ini</small></p>
+                    </div>
+                    <div id="qrCodeUmumStatus" class="mt-2"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section untuk Proses Keluar Berdasarkan Kode Parkir -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Proses Keluar Berdasarkan Kode Parkir</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="alert alert-info">
+                        <i class="ti ti-info-circle"></i>
+                        <strong>Proses Keluar:</strong> Masukkan kode parkir yang diberikan oleh pengguna untuk memproses keluar
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-8 offset-md-2">
+                    <div class="input-group">
+                        <input type="text" id="kodeParkirInput" class="form-control" placeholder="Masukkan kode parkir..." aria-label="Kode parkir">
+                        <button class="btn btn-danger" type="button" id="prosesKeluarBtn">
+                            <i class="ti ti-door-exit"></i> Proses Keluar
+                        </button>
+                    </div>
+                    <div id="prosesKeluarStatus" class="mt-3"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Tabel Data Parkir -->
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
@@ -314,4 +371,116 @@
         </div>
     </div>
 </div>
+
+<script>
+    // Fungsi untuk generate QR code umum
+    document.getElementById('generateQrUmumBtn').addEventListener('click', function() {
+        const btn = this;
+        const originalText = btn.innerHTML;
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="ti ti-loader ti-spin"></i> Menghasilkan...';
+
+        fetch('{{ route("parking.management.generate-qr-umum") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Tampilkan QR code sebagai image
+                const qrCodeImageUrl = `data:image/svg+xml;base64,${btoa(
+                    '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">' +
+                    '<rect width="200" height="200" fill="white"/>' +
+                    '<text x="100" y="100" font-size="16" text-anchor="middle" alignment-baseline="middle" fill="black">' + data.qr_code.substring(0, 20) + '...</text>' +
+                    '</svg>'
+                )}`;
+
+                document.getElementById('qrCodeUmumImage').innerHTML = `
+                    <img src="data:image/svg+xml;base64,${btoa(
+                        `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+                            <rect width="200" height="200" fill="white"/>
+                            <text x="100" y="100" font-size="12" text-anchor="middle" alignment-baseline="middle" fill="black">${data.qr_code.substring(0, 25)}...</text>
+                        </svg>`
+                    )}" alt="QR Code Umum" class="img-fluid border border-1 rounded">
+                    <p class="mt-2">Kode: ${data.qr_code}</p>
+                `;
+
+                document.getElementById('qrCodeUmumContainer').style.display = 'block';
+                document.getElementById('qrCodeUmumStatus').innerHTML =
+                    `<div class="alert alert-success mt-2">${data.message}</div>`;
+            } else {
+                document.getElementById('qrCodeUmumStatus').innerHTML =
+                    `<div class="alert alert-danger mt-2">Gagal: ${data.message || 'Terjadi kesalahan'}</div>`;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('qrCodeUmumStatus').innerHTML =
+                `<div class="alert alert-danger mt-2">Terjadi kesalahan saat menghubungi server</div>`;
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        });
+    });
+
+    // Fungsi untuk proses keluar berdasarkan kode parkir
+    document.getElementById('prosesKeluarBtn').addEventListener('click', function() {
+        const kodeParkir = document.getElementById('kodeParkirInput').value.trim();
+
+        if (!kodeParkir) {
+            document.getElementById('prosesKeluarStatus').innerHTML =
+                `<div class="alert alert-warning">Silakan masukkan kode parkir</div>`;
+            return;
+        }
+
+        const btn = this;
+        const originalText = btn.innerHTML;
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="ti ti-loader ti-spin"></i> Memproses...';
+
+        fetch('{{ route("parking.scan.exit") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({
+                kode_parkir: kodeParkir
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            let alertClass = data.success ? 'alert-success' : 'alert-danger';
+            document.getElementById('prosesKeluarStatus').innerHTML =
+                '<div class="alert ' + alertClass + '">' + data.message + '</div>';
+
+            if (data.success) {
+                // Kosongkan input setelah berhasil
+                document.getElementById('kodeParkirInput').value = '';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('prosesKeluarStatus').innerHTML =
+                '<div class="alert alert-danger">Terjadi kesalahan saat menghubungi server</div>';
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        });
+    });
+
+    // Tambahkan juga event listener untuk tombol enter di input
+    document.getElementById('kodeParkirInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            document.getElementById('prosesKeluarBtn').click();
+        }
+    });
+</script>
 @endsection

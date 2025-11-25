@@ -70,8 +70,9 @@
                                             <i class="ti ti-eye me-1"></i> Detail
                                         </a>
                                         @if(!$entry->parkingExit)
-                                        <a class="dropdown-item" href="{{ route('parking.transactions.payment.form', $entry->id) }}">
-                                            <i class="ti ti-currency-riyal me-1"></i> Bayar
+                                        <!-- Tombol Keluar dengan Modal -->
+                                        <a class="dropdown-item" href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#exitModal{{ $entry->id }}">
+                                            <i class="ti ti-door-exit me-1"></i> Keluar
                                         </a>
                                         <a class="dropdown-item" href="{{ route('parking.management.edit', $entry->id) }}">
                                             <i class="ti ti-pencil me-1"></i> Edit
@@ -90,6 +91,53 @@
                                         </form>
                                     </div>
                                 </div>
+
+                                <!-- Modal Keluar untuk setiap entri -->
+                                @if(!$entry->parkingExit)
+                                <div class="modal fade" id="exitModal{{ $entry->id }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Proses Keluar Parkir</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <form action="{{ route('parking.management.process-exit', $entry->id) }}" method="POST">
+                                                @csrf
+                                                <div class="modal-body">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Pengguna</label>
+                                                        <input type="text" class="form-control" value="{{ $entry->user->name }} ({{ $entry->user->username }})" readonly>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Waktu Masuk</label>
+                                                        <input type="text" class="form-control" value="{{ $entry->entry_time->format('d/m/Y H:i:s') }}" readonly>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="exit_time_{{ $entry->id }}" class="form-label">Waktu Keluar</label>
+                                                        <input type="datetime-local" class="form-control" name="exit_time" id="exit_time_{{ $entry->id }}" value="{{ now()->format('Y-m-d\TH:i') }}" required>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="exit_location_{{ $entry->id }}" class="form-label">Lokasi Keluar (Opsional)</label>
+                                                        <input type="text" class="form-control" name="exit_location" id="exit_location_{{ $entry->id }}" placeholder="Lokasi keluar kendaraan">
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Biaya Parkir</label>
+                                                        <input type="text" class="form-control" value="Rp2.000" readonly>
+                                                        <input type="hidden" name="parking_fee" value="2000">
+                                                    </div>
+                                                    <div class="alert alert-info">
+                                                        <i class="ti ti-info-circle"></i> Biaya parkir tetap Rp 2.000 untuk semua kendaraan
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                                                    <button type="submit" class="btn btn-primary">Proses Keluar</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                                @endif
                             </td>
                         </tr>
                         @empty

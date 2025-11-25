@@ -119,8 +119,24 @@ class ParkingController extends Controller
             ], 400);
         }
 
+        // Periksa apakah QR code adalah untuk pengguna tertentu atau umum
+        $user = Auth::user();
+
+        // Jika QR code adalah untuk pengguna tertentu dan bukan untuk pengguna yang sedang login dan bukan admin/petugas, tolak
+        if ($qrCodeModel->user_id && $qrCodeModel->user_id != $user->id && !$user->hasRole(['Admin', 'Petugas'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda hanya dapat memindai QR code milik Anda sendiri'
+            ], 400);
+        }
+
+        // Tentukan user_id untuk entri parkir
+        // Jika QR code umum (tanpa user_id), gunakan user yang sedang login
+        // Jika QR code milik pengguna tertentu, gunakan user_id dari QR code
+        $entryUserId = $qrCodeModel->user_id ?? $user->id;
+
         // Cek apakah pengguna sudah memiliki masuk aktif (belum keluar)
-        $activeEntry = ParkingEntry::where('user_id', $qrCodeModel->user_id)
+        $activeEntry = ParkingEntry::where('user_id', $entryUserId)
             ->whereDoesntHave('parkingExit')
             ->first();
 
@@ -137,7 +153,7 @@ class ParkingController extends Controller
         // Buat catatan masuk parkir
         $parkingEntry = ParkingEntry::create([
             'kode_parkir' => $kodeParkir,
-            'user_id' => $qrCodeModel->user_id,
+            'user_id' => $entryUserId,
             'qr_code_id' => $qrCodeModel->id,
             'entry_time' => Carbon::now(),
             'entry_location' => $request->entry_location ?? null,
@@ -145,8 +161,10 @@ class ParkingController extends Controller
             'vehicle_plate_number' => $request->vehicle_plate_number ?? null,
         ]);
 
-        // Tandai QR code sebagai telah digunakan
-        $this->qrCodeService->markQRCodeAsUsed($qrCodeModel);
+        // Tandai QR code sebagai telah digunakan (hanya untuk QR code umum, karena untuk per pengguna hanya bisa digunakan sekali oleh pemiliknya)
+        if (!$qrCodeModel->user_id) {
+            $this->qrCodeService->markQRCodeAsUsed($qrCodeModel);
+        }
 
         return response()->json([
             'success' => true,
@@ -156,40 +174,28 @@ class ParkingController extends Controller
     }
 
     /**
-     * Scan QR code untuk keluar
+     * Proses keluar parkir berdasarkan kode parkir (tidak perlu scan barcode lagi)
      */
     public function scanExit(Request $request)
     {
         $request->validate([
-            'qr_code' => 'required|string',
+            'kode_parkir' => 'required|string',
         ]);
 
-        $qrCodeModel = $this->qrCodeService->validateQRCodeForEntry($request->qr_code);
-
-        if (!$qrCodeModel) {
-            return response()->json([
-                'success' => false,
-                'message' => 'QR code tidak valid atau telah kadaluarsa'
-            ], 400);
-        }
-
-        // Cari catatan masuk parkir untuk pengguna ini yang belum keluar
-        $parkingEntry = ParkingEntry::where('user_id', $qrCodeModel->user_id)
+        // Cari catatan masuk parkir berdasarkan kode parkir
+        $parkingEntry = ParkingEntry::where('kode_parkir', $request->kode_parkir)
             ->whereDoesntHave('parkingExit')
             ->first();
 
         if (!$parkingEntry) {
             return response()->json([
                 'success' => false,
-                'message' => 'Tidak ditemukan catatan masuk parkir aktif untuk pengguna ini'
+                'message' => 'Kode parkir tidak valid atau pengguna sudah keluar'
             ], 400);
         }
 
-        // Hitung biaya parkir (contoh: Rp 5.000 per jam)
-        $entryTime = $parkingEntry->entry_time;
-        $exitTime = Carbon::now();
-        $hoursParked = $entryTime->diffInHours($exitTime);
-        $parkingFee = $hoursParked > 0 ? $hoursParked * 5000 : 5000; // Minimal Rp 5.000
+        // Set biaya parkir tetap Rp 2000
+        $parkingFee = 2000;
 
         // Cek apakah pembayaran sudah dilakukan
         $transactionService = app(\App\Services\ParkingTransactionService::class);
@@ -225,9 +231,9 @@ class ParkingController extends Controller
 
         // Buat catatan keluar parkir
         $parkingExit = ParkingExit::create([
-            'user_id' => $qrCodeModel->user_id,
+            'user_id' => $parkingEntry->user_id,
             'parking_entry_id' => $parkingEntry->id,
-            'exit_time' => $exitTime,
+            'exit_time' => Carbon::now(),
             'exit_location' => $request->exit_location ?? null,
             'parking_fee' => $parkingFee,
         ]);

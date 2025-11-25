@@ -13,7 +13,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
 
-    <title>Login - Parkir System</title>
+    <title>Register - Parkir System</title>
 
     <meta name="description" content="" />
 
@@ -58,7 +58,7 @@
     <div class="container-xxl">
       <div class="authentication-wrapper authentication-basic container-p-y">
         <div class="authentication-inner py-6">
-          <!-- Login -->
+          <!-- Register Card -->
           <div class="card">
             <div class="card-body">
               <!-- Logo -->
@@ -96,22 +96,66 @@
                 </a>
               </div>
               <!-- /Logo -->
-              <h4 class="mb-1">Welcome! 👋</h4>
-              <p class="mb-6">Please sign-in to your account and start managing parking</p>
+              <h4 class="mb-1">Create an account 🚀</h4>
+              <p class="mb-6">Make your parking management easy and fun!</p>
 
-              <form id="formAuthentication" class="mb-4" action="{{ route('login') }}" method="POST">
+              <form id="formAuthentication" class="mb-6" action="{{ route('register') }}" method="POST">
                 @csrf
                 <div class="mb-6 form-control-validation">
-                  <label for="login" class="form-label">Email / Username / NIM / NIP</label>
+                  <label for="name" class="form-label">Name</label>
                   <input
                     type="text"
-                    class="form-control @error('login') is-invalid @enderror"
-                    id="login"
-                    name="login"
-                    placeholder="Enter your email, username, NIP, or NIM"
-                    value="{{ old('login') }}"
+                    class="form-control @error('name') is-invalid @enderror"
+                    id="name"
+                    name="name"
+                    placeholder="Enter your name"
+                    value="{{ old('name') }}"
                     autofocus />
-                    @error('login')
+                    @error('name')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+                <div class="mb-6 form-control-validation">
+                  <label for="username" class="form-label">Username</label>
+                  <input
+                    type="text"
+                    class="form-control @error('username') is-invalid @enderror"
+                    id="username"
+                    name="username"
+                    placeholder="Enter your username"
+                    value="{{ old('username') }}" />
+                    @error('username')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+                <div class="mb-6 form-control-validation">
+                  <label for="email" class="form-label">Email</label>
+                  <input type="email" class="form-control @error('email') is-invalid @enderror" id="email" name="email" placeholder="Enter your email" value="{{ old('email') }}" />
+                  @error('email')
+                      <div class="invalid-feedback">{{ $message }}</div>
+                  @enderror
+                </div>
+                <div class="mb-6 form-control-validation">
+                  <label for="user_type" class="form-label">User Type</label>
+                  <select class="form-control @error('user_type') is-invalid @enderror" id="user_type" name="user_type" onchange="toggleIdentityField()">
+                    <option value="">Select User Type</option>
+                    <option value="mahasiswa" {{ old('user_type') == 'mahasiswa' ? 'selected' : '' }}>Mahasiswa</option>
+                    <option value="dosen" {{ old('user_type') == 'dosen' ? 'selected' : '' }}>Dosen</option>
+                  </select>
+                  @error('user_type')
+                      <div class="invalid-feedback">{{ $message }}</div>
+                  @enderror
+                </div>
+                <div class="mb-6 form-control-validation" id="identity_field" style="display: none;">
+                  <label for="identity_number" class="form-label" id="identity_label">NIM (for Mahasiswa)</label>
+                  <input
+                    type="text"
+                    class="form-control @error('identity_number') is-invalid @enderror"
+                    id="identity_number"
+                    name="identity_number"
+                    placeholder="Enter your NIM"
+                    value="{{ old('identity_number') }}" />
+                    @error('identity_number')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
@@ -131,26 +175,35 @@
                     @enderror
                   </div>
                 </div>
-                <div class="my-8">
-                  <div class="d-flex justify-content-between">
-                    <div class="form-check mb-0 ms-2">
-                      <input class="form-check-input" type="checkbox" id="remember-me" name="remember" {{ old('remember') ? 'checked' : '' }} />
-                      <label class="form-check-label" for="remember-me"> Remember Me </label>
-                    </div>
-                    <a href="{{ route('password.request') }}">
-                      <p class="mb-0">Forgot Password?</p>
-                    </a>
+                <div class="mb-6 form-password-toggle form-control-validation">
+                  <label class="form-label" for="password_confirmation">Confirm Password</label>
+                  <div class="input-group input-group-merge">
+                    <input
+                      type="password"
+                      id="password_confirmation"
+                      class="form-control"
+                      name="password_confirmation"
+                      placeholder="&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;"
+                      aria-describedby="password_confirmation" />
+                    <span class="input-group-text cursor-pointer"><i class="icon-base ti tabler-eye-off"></i></span>
                   </div>
                 </div>
-                <div class="mb-6">
-                  <button class="btn btn-primary d-grid w-100" type="submit">Login</button>
+                <div class="my-8 form-control-validation">
+                  <div class="form-check mb-0 ms-2">
+                    <input class="form-check-input" type="checkbox" id="terms-conditions" name="terms" />
+                    <label class="form-check-label" for="terms-conditions">
+                      I agree to
+                      <a href="javascript:void(0);">privacy policy & terms</a>
+                    </label>
+                  </div>
                 </div>
+                <button class="btn btn-primary d-grid w-100">Sign up</button>
               </form>
 
               <p class="text-center">
-                <span>New on our platform?</span>
-                <a href="{{ route('register') }}">
-                  <span>Create an account</span>
+                <span>Already have an account?</span>
+                <a href="{{ route('login') }}">
+                  <span>Sign in instead</span>
                 </a>
               </p>
 
@@ -177,7 +230,7 @@
               </div>
             </div>
           </div>
-          <!-- /Login -->
+          <!-- Register Card -->
         </div>
       </div>
     </div>
@@ -207,5 +260,34 @@
 
     <!-- Page JS -->
     <script src="{{ asset('assets/js/pages-auth.js') }}"></script>
+
+    <script>
+      function toggleIdentityField() {
+        const userType = document.getElementById('user_type').value;
+        const identityField = document.getElementById('identity_field');
+        const identityLabel = document.getElementById('identity_label');
+        const identityInput = document.getElementById('identity_number');
+
+        if (userType === 'mahasiswa') {
+          identityField.style.display = 'block';
+          identityLabel.textContent = 'NIM (for Mahasiswa)';
+          identityInput.placeholder = 'Enter your NIM';
+          identityInput.name = 'identity_number';
+        } else if (userType === 'dosen') {
+          identityField.style.display = 'block';
+          identityLabel.textContent = 'NIP/NUP (for Dosen)';
+          identityInput.placeholder = 'Enter your NIP/NUP';
+          identityInput.name = 'identity_number';
+        } else {
+          identityField.style.display = 'none';
+          identityInput.name = '';
+        }
+      }
+
+      // Initialize the function on page load to handle old input
+      document.addEventListener('DOMContentLoaded', function() {
+        toggleIdentityField();
+      });
+    </script>
   </body>
 </html>

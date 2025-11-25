@@ -18,26 +18,9 @@ class ParkingTransactionService
     public function generateKodeParkir(): string
     {
         $kode = 'PK-' . date('Ymd') . '-' . strtoupper(Str::random(6));
-        
+
         // Pastikan kode unik
         while (ParkingEntry::where('kode_parkir', $kode)->exists()) {
-            $kode = 'PK-' . date('Ymd') . '-' . strtoupper(Str::random(6));
-        }
-        
-        return $kode;
-    }
-
-    /**
-     * Generate kode parkir unik untuk entri parkir
-     *
-     * @return string
-     */
-    public function generateKodeParkir(): string
-    {
-        $kode = 'PK-' . date('Ymd') . '-' . strtoupper(Str::random(6));
-
-        // Pastikan kode unik
-        while (\App\Models\ParkingEntry::where('kode_parkir', $kode)->exists()) {
             $kode = 'PK-' . date('Ymd') . '-' . strtoupper(Str::random(6));
         }
 

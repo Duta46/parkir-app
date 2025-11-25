@@ -32,7 +32,7 @@ class ParkingManagementController extends Controller
      */
     private function buildSearchQuery(array $filters)
     {
-        $query = ParkingEntry::with(['user:id,name,email', 'qrCode:id,user_id,code,generated_date', 'parkingExit:id,parking_entry_id,exit_time,parking_fee'])
+        $query = ParkingEntry::with(['user:id,name,username', 'qrCode:id,user_id,code,generated_date', 'parkingExit:id,parking_entry_id,exit_time,parking_fee'])
             ->orderBy('entry_time', 'desc');
 
         if (!empty($filters['user_id'])) {
@@ -66,7 +66,7 @@ class ParkingManagementController extends Controller
         $this->authorizeAdmin();
 
         // Ambil data parkir terbaru dengan eager loading terbatas untuk mencegah N+1
-        $parkingEntries = ParkingEntry::with(['user:id,name,email', 'qrCode:id,user_id,code,generated_date', 'parkingExit:id,parking_entry_id,exit_time,parking_fee'])
+        $parkingEntries = ParkingEntry::with(['user:id,name,username', 'qrCode:id,user_id,code,generated_date', 'parkingExit:id,parking_entry_id,exit_time,parking_fee'])
             ->orderBy('entry_time', 'desc')
             ->paginate(15);
 
@@ -130,7 +130,7 @@ class ParkingManagementController extends Controller
     {
         $this->authorizeAdmin();
 
-        $parkingEntries = ParkingEntry::with(['user:id,name,email', 'qrCode:id,user_id,code,generated_date', 'parkingExit:id,parking_entry_id,exit_time,parking_fee'])
+        $parkingEntries = ParkingEntry::with(['user:id,name,username', 'qrCode:id,user_id,code,generated_date', 'parkingExit:id,parking_entry_id,exit_time,parking_fee'])
             ->orderBy('entry_time', 'desc')
             ->paginate(50);
 
@@ -144,7 +144,7 @@ class ParkingManagementController extends Controller
     {
         $this->authorizeAdmin();
 
-        $parkingEntry = ParkingEntry::with(['user:id,name,email', 'qrCode:id,user_id,code,generated_date', 'parkingExit:id,parking_entry_id,exit_time,parking_fee'])->findOrFail($id);
+        $parkingEntry = ParkingEntry::with(['user:id,name,username', 'qrCode:id,user_id,code,generated_date', 'parkingExit:id,parking_entry_id,exit_time,parking_fee'])->findOrFail($id);
 
         return view('parking.management.show', compact('parkingEntry'));
     }
@@ -167,9 +167,54 @@ class ParkingManagementController extends Controller
         $parkingEntries = $query->paginate(15);
 
         // Ambil semua pengguna untuk filter
-        $users = User::select('id', 'name', 'email')->get();
+        $users = User::select('id', 'name', 'username')->get();
 
         return view('parking.management.search', compact('parkingEntries', 'users'));
+    }
+
+    /**
+     * Generate QR code umum harian untuk semua pengguna (untuk admin/petugas cetak barcode umum)
+     */
+    public function generateQRCodeUmum()
+    {
+        $this->authorizeAdmin();
+
+        $qrCodeService = app(\App\Services\QRCodeService::class);
+
+        // Generate QR code umum harian
+        $qrCodeModel = $qrCodeService->generateDailyQRCodeUmum();
+
+        return response()->json([
+            'success' => true,
+            'qr_code' => $qrCodeModel->code,
+            'expires_at' => $qrCodeModel->expires_at->format('Y-m-d H:i:s'),
+            'message' => 'QR code umum berhasil dibuat untuk hari ini'
+        ]);
+    }
+
+    /**
+     * Generate QR code untuk pengguna tertentu (untuk admin/petugas cetak barcode)
+     */
+    public function generateQRCodeForUser(Request $request)
+    {
+        $this->authorizeAdmin();
+
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+        ]);
+
+        $user = User::find($request->user_id);
+        $qrCodeService = app(\App\Services\QRCodeService::class);
+
+        // Generate QR code harian untuk pengguna
+        $qrCodeModel = $qrCodeService->generateDailyQRCode($user);
+
+        return response()->json([
+            'success' => true,
+            'qr_code' => $qrCodeModel->code,
+            'expires_at' => $qrCodeModel->expires_at->format('Y-m-d H:i:s'),
+            'message' => 'QR code berhasil dibuat untuk ' . $user->name
+        ]);
     }
 
     /**
@@ -179,7 +224,7 @@ class ParkingManagementController extends Controller
     {
         $this->authorizeAdmin();
 
-        $users = User::select('id', 'name', 'email')->get();
+        $users = User::select('id', 'name', 'username')->get();
         return view('parking.management.create', compact('users'));
     }
 
@@ -229,8 +274,8 @@ class ParkingManagementController extends Controller
     {
         $this->authorizeAdmin();
 
-        $parkingEntry = ParkingEntry::with(['user:id,name,email', 'qrCode:id,user_id,code,generated_date', 'parkingExit:id,parking_entry_id,exit_time,parking_fee'])->findOrFail($id);
-        $users = User::select('id', 'name', 'email')->get();
+        $parkingEntry = ParkingEntry::with(['user:id,name,username', 'qrCode:id,user_id,code,generated_date', 'parkingExit:id,parking_entry_id,exit_time,parking_fee'])->findOrFail($id);
+        $users = User::select('id', 'name', 'username')->get();
 
         return view('parking.management.edit', compact('parkingEntry', 'users'));
     }
@@ -269,7 +314,7 @@ class ParkingManagementController extends Controller
     {
         $this->authorizeAdmin();
 
-        $parkingEntry = ParkingEntry::with(['user:id,name,email', 'qrCode:id,user_id,code,generated_date', 'parkingExit:id,parking_entry_id,exit_time,parking_fee'])->findOrFail($id);
+        $parkingEntry = ParkingEntry::with(['user:id,name,username', 'qrCode:id,user_id,code,generated_date', 'parkingExit:id,parking_entry_id,exit_time,parking_fee'])->findOrFail($id);
 
         if ($parkingEntry->parkingExit) {
             return redirect()->back()->with('error', 'Entri ini sudah memiliki catatan keluar.');
@@ -290,6 +335,39 @@ class ParkingManagementController extends Controller
         ]);
 
         return redirect()->route('parking.management.show', $parkingEntry->id)->with('success', 'Catatan keluar berhasil ditambahkan.');
+    }
+
+    /**
+     * Proses keluar parkir dari All Records
+     */
+    public function processExit(Request $request, $id)
+    {
+        $this->authorizeAdmin();
+
+        $parkingEntry = ParkingEntry::findOrFail($id);
+
+        // Cek apakah sudah keluar
+        if ($parkingEntry->parkingExit) {
+            return redirect()->back()->with('error', 'Entri ini sudah memiliki catatan keluar.');
+        }
+
+        // Validasi input pembayaran
+        $validated = $request->validate([
+            'exit_time' => 'required|date',
+            'exit_location' => 'nullable|string|max:255',
+            'parking_fee' => 'required|numeric|min:0',
+        ]);
+
+        // Buat catatan keluar parkir
+        $parkingExit = ParkingExit::create([
+            'user_id' => $parkingEntry->user_id,
+            'parking_entry_id' => $parkingEntry->id,
+            'exit_time' => $validated['exit_time'],
+            'exit_location' => $validated['exit_location'] ?? null,
+            'parking_fee' => $validated['parking_fee'],
+        ]);
+
+        return redirect()->route('parking.management.all')->with('success', 'Proses keluar berhasil dilakukan.');
     }
 
     /**
