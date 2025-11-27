@@ -4,9 +4,16 @@ use App\Http\Controllers\ParkingController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ParkingManagementController;
 use App\Http\Controllers\ParkingTransactionController;
+use App\Http\Controllers\LandingPageController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', [ParkingController::class, 'dashboard'])->middleware(['auth', 'verified'])->name('dashboard');
+<<<<<<< HEAD
+Route::get('/', function () {
+    return view('auth.login');
+});
+=======
+Route::get('/', [LandingPageController::class, 'index'])->name('landing-page');
+>>>>>>> temp-save-commit
 
 Route::get('/dashboard', [ParkingController::class, 'dashboard'])->middleware(['auth', 'verified'])->name('dashboard');
 
