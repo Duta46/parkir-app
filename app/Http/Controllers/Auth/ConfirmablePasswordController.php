@@ -24,10 +24,9 @@ class ConfirmablePasswordController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        if (! Auth::guard('web')->validate([
-            'email' => $request->user()->email,
-            'password' => $request->password,
-        ])) {
+        // Kita tidak bisa menggunakan validasi berbasis email karena tidak ada kolom email
+        // Jadi kita akan menggunakan Hash::check untuk memverifikasi password
+        if (! \Illuminate\Support\Facades\Hash::check($request->password, $request->user()->password)) {
             throw ValidationException::withMessages([
                 'password' => __('auth.password'),
             ]);

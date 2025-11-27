@@ -113,20 +113,49 @@
 
           <ul class="menu-inner py-1">
             <!-- Dashboard -->
-            <li class="menu-item">
+            {{-- <li class="menu-item">
               <a href="/" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-smart-home"></i>
+                <div data-i18n="Dashboard">Dashboard</div>
+              </a>
+            </li> --}}
+
+            <!-- Add more menu items here -->
+            <li class="menu-item">
+              <a href="/dashboard" class="menu-link">
                 <i class="menu-icon icon-base ti tabler-smart-home"></i>
                 <div data-i18n="Dashboard">Dashboard</div>
               </a>
             </li>
 
-            <!-- Add more menu items here -->
+            @auth
+            @if(auth()->user()->hasRole('Admin'))
+            <!-- Parking Management Menu -->
             <li class="menu-item">
-              <a href="/dashboard" class="menu-link">
-                <i class="menu-icon icon-base ti tabler-chart-bar"></i>
-                <div data-i18n="Analytics">Analytics</div>
+              <a href="javascript:void(0);" class="menu-link menu-toggle">
+                <i class="menu-icon icon-base ti tabler-car"></i>
+                <div data-i18n="ParkingManagement">Manajemen Parkir</div>
               </a>
+              <ul class="menu-sub">
+                <li class="menu-item">
+                  <a href="{{ route('parking.management.index') }}" class="menu-link">
+                    <div data-i18n="Dashboard">Dashboard</div>
+                  </a>
+                </li>
+                <li class="menu-item">
+                  <a href="{{ route('parking.transactions.index') }}" class="menu-link">
+                    <div data-i18n="Transactions">Transaksi</div>
+                  </a>
+                </li>
+                <li class="menu-item">
+                  <a href="{{ route('parking.management.all') }}" class="menu-link">
+                    <div data-i18n="AllRecords">Semua Data</div>
+                  </a>
+                </li>
+              </ul>
             </li>
+            @endif
+            @endauth
 
             <li class="menu-item">
               <a href="/users" class="menu-link">
@@ -400,30 +429,10 @@
                 <div
                   class="footer-container d-flex align-items-center justify-content-between py-4 flex-md-row flex-column">
                   <div class="text-body">
-                    ©
-                    <script>
-                      document.write(new Date().getFullYear());
-                    </script>
-                    , made with ❤️ by <a href="https://pixinvent.com" target="_blank" class="footer-link">Pixinvent</a>
+                    © {{ date('Y') }}, Sistem Parkir QR Code - {{ config('app.name', 'Laravel') }}
                   </div>
                   <div class="d-none d-lg-inline-block">
-                    <a href="https://themeforest.net/licenses/standard" class="footer-link me-4" target="_blank"
-                      >License</a
-                    >
-                    <a href="https://themeforest.net/user/pixinvent/portfolio" target="_blank" class="footer-link me-4"
-                      >More Themes</a
-                    >
-
-                    <a
-                      href="https://demos.pixinvent.com/vuexy-html-admin-template/documentation/"
-                      target="_blank"
-                      class="footer-link me-4"
-                      >Documentation</a
-                    >
-
-                    <a href="https://pixinvent.ticksy.com/" target="_blank" class="footer-link d-none d-sm-inline-block"
-                      >Support</a
-                    >
+                    Aplikasi Manajemen Parkir Berbasis QR Code
                   </div>
                 </div>
               </div>

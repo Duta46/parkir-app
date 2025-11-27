@@ -23,8 +23,28 @@ class UserFactory extends Factory
      */
     public function definition(): array
     {
+        $userType = $this->faker->randomElement(['admin', 'pegawai', 'dosen', 'mahasiswa']);
+
+        $identityData = [];
+        if ($userType === 'admin' || $userType === 'pegawai') {
+            $identityData = [
+                'username' => fake()->userName(),
+                'identity_number' => null,
+            ];
+        } else {
+            $identityData = [
+                'username' => fake()->userName(),
+                'identity_number' => $userType === 'dosen'
+                    ? $this->faker->numerify('NUP####')
+                    : $this->faker->numerify('NIM########'),
+            ];
+        }
+
         return [
             'name' => fake()->name(),
+            'username' => $identityData['username'],
+            'identity_number' => $identityData['identity_number'],
+            'user_type' => $userType,
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
@@ -40,5 +60,57 @@ class UserFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
         ]);
+    }
+
+    /**
+     * Admin user
+     */
+    public function admin(): static
+    {
+        return $this->state(function (array $attributes) {
+            return [
+                'username' => 'admin',
+                'identity_number' => null,
+                'user_type' => 'admin',
+            ];
+        });
+    }
+
+    /**
+     * Pegawai user
+     */
+    public function pegawai(): static
+    {
+        return $this->state(function (array $attributes) {
+            return [
+                'user_type' => 'pegawai',
+            ];
+        });
+    }
+
+    /**
+     * Dosen user
+     */
+    public function dosen(): static
+    {
+        return $this->state(function (array $attributes) {
+            return [
+                'user_type' => 'dosen',
+                'identity_number' => $this->faker->numerify('NIP####'),
+            ];
+        });
+    }
+
+    /**
+     * Mahasiswa user
+     */
+    public function mahasiswa(): static
+    {
+        return $this->state(function (array $attributes) {
+            return [
+                'user_type' => 'mahasiswa',
+                'identity_number' => $this->faker->numerify('NIM########'),
+            ];
+        });
     }
 }
