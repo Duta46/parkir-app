@@ -22,3 +22,7 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+start-sail.bat
+docker-compose.yml
+Dockerfile
+docker/
