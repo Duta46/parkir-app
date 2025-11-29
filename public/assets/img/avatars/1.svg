@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+  <rect width="200" height="200" fill="#f0f0f0"/>
+  <circle cx="100" cy="80" r="40" fill="#d0d0d0"/>
+  <path d="M60,160 C60,130 100,120 100,120 C100,120 140,130 140,160 Z" fill="#d0d0d0"/>
+  <text x="100" y="115" font-family="Arial, sans-serif" font-size="24" text-anchor="middle" fill="#666666">USR</text>
+</svg>

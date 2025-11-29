@@ -7,13 +7,7 @@ use App\Http\Controllers\ParkingTransactionController;
 use App\Http\Controllers\LandingPageController;
 use Illuminate\Support\Facades\Route;
 
-<<<<<<< HEAD
-Route::get('/', function () {
-    return view('auth.login');
-});
-=======
 Route::get('/', [LandingPageController::class, 'index'])->name('landing-page');
->>>>>>> temp-save-commit
 
 Route::get('/dashboard', [ParkingController::class, 'dashboard'])->middleware(['auth', 'verified'])->name('dashboard');
 
@@ -65,7 +59,7 @@ Route::post('/login', [App\Http\Controllers\CustomLoginController::class, 'login
 Route::post('/logout', [App\Http\Controllers\CustomLoginController::class, 'logout'])->name('logout');
 
 Route::get('/register', [App\Http\Controllers\CustomRegisterController::class, 'showRegistrationForm'])->name('register');
-Route::post('/register', [App\Http\Controllers\CustomRegisterController::class, 'register'])->name('register.custom');
+Route::post('/register', [App\Http\Controllers\CustomRegisterController::class, 'register'])->name('register.store');
 
 // Password reset routes (using Laravel's built-in controllers)
 Route::get('/forgot-password', [App\Http\Controllers\Auth\PasswordResetLinkController::class, 'create'])->name('password.request');
