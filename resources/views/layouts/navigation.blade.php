@@ -23,6 +23,10 @@
                     <x-nav-link :href="route('parking.transactions.index')" :active="request()->routeIs('parking.transactions.*')">
                         {{ __('Transaksi Parkir') }}
                     </x-nav-link>
+                    @elseif(Auth::user()->hasRole('Pengguna') || in_array(Auth::user()->user_type, ['Dosen', 'Mahasiswa']))
+                    <x-nav-link :href="route('scan.barcode.page')" :active="request()->routeIs('scan.barcode.*')">
+                        {{ __('Scan Barcode') }}
+                    </x-nav-link>
                     @endif
                 </div>
             </div>
@@ -86,6 +90,10 @@
             </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('parking.transactions.index')" :active="request()->routeIs('parking.transactions.*')">
                 {{ __('Transaksi Parkir') }}
+            </x-responsive-nav-link>
+            @elseif(Auth::user()->hasRole('Pengguna') || in_array(Auth::user()->user_type, ['Dosen', 'Mahasiswa']))
+            <x-responsive-nav-link :href="route('scan.barcode.page')" :active="request()->routeIs('scan.barcode.*')">
+                {{ __('Scan Barcode') }}
             </x-responsive-nav-link>
             @endif
         </div>

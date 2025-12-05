@@ -25,6 +25,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/scan-entry', [ParkingController::class, 'scanEntry'])->name('parking.scan.entry');
     Route::post('/scan-exit', [ParkingController::class, 'scanExit'])->name('parking.scan.exit');
 
+    // Scan barcode route for users (Pengguna role or Dosen/Mahasiswa user_type)
+    Route::get('/scan-barcode', [ParkingController::class, 'showScanPage'])->middleware('canAccessScanPage')->name('scan.barcode.page');
+    Route::post('/scan-barcode', [ParkingController::class, 'scanBarcode'])->middleware('canAccessScanPage')->name('scan.barcode');
+
     // Parking management routes for admin
     Route::prefix('parking-management')->middleware('role:Admin')->group(function() {
         Route::get('/', [ParkingManagementController::class, 'index'])->name('parking.management.index');

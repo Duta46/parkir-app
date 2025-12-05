@@ -25,6 +25,8 @@ class User extends Authenticatable
         'user_type',
         'password',
         'role',
+        'vehicle_type',
+        'vehicle_plate_number',
     ];
 
     protected $casts = [

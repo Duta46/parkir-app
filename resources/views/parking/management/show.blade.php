@@ -137,6 +137,24 @@
                                 </tr>
                             </table>
                         </div>
+
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-muted text-uppercase">QR Code Pengguna</h6>
+                            <div class="text-center">
+                                @php
+                                    $qrCodeService = app(\App\Services\QRCodeService::class);
+                                    $qrCodeImage = $qrCodeService->generateQRCodeImage($parkingEntry->qrCode->code, 150);
+                                @endphp
+                                @if(strpos($qrCodeImage, '<svg') !== false)
+                                    {!! $qrCodeImage !!}
+                                @else
+                                    <img src="data:image/png;base64,{{ base64_encode($qrCodeImage) }}"
+                                         alt="QR Code Pengguna"
+                                         class="img-fluid border border-1 rounded"
+                                         style="max-width: 150px; height: auto;">
+                                @endif
+                            </div>
+                        </div>
                         
                         @if($parkingEntry->parkingExit)
                         <div class="col-md-6 mb-3">

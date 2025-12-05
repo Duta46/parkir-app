@@ -102,13 +102,13 @@
               <form id="formAuthentication" class="mb-4" action="{{ route('login') }}" method="POST">
                 @csrf
                 <div class="mb-6 form-control-validation">
-                  <label for="login" class="form-label">Email / Username / NIM / NIP</label>
+                  <label for="login" class="form-label">Username / NIP / NUP / NIM</label>
                   <input
                     type="text"
                     class="form-control @error('login') is-invalid @enderror"
                     id="login"
                     name="login"
-                    placeholder="Enter your email, username, NIP, or NIM"
+                    placeholder="Enter your username, NIP, NUP, or NIM"
                     value="{{ old('login') }}"
                     autofocus />
                     @error('login')

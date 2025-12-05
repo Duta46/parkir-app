@@ -171,6 +171,16 @@ class QRCodeService
             $qrCode = \SimpleSoftwareIO\QrCode\Facades\QrCode::size($size)
                 ->format('svg')
                 ->generate($code);
+        } catch (\Exception $e) {
+            // Jika semua pendekatan gagal, kembalikan string kosong atau kode QR dalam bentuk teks
+            \Log::error('Error generating QR code image: ' . $e->getMessage(), [
+                'code' => $code,
+                'size' => $size,
+                'error' => $e->getMessage()
+            ]);
+
+            // Kembalikan kode sebagai fallback
+            return '';
         }
 
         return $qrCode;

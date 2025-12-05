@@ -33,4 +33,12 @@ class QrCode extends Model
     {
         return $this->hasMany(\App\Models\ParkingEntry::class);
     }
+
+    /**
+     * Accessor untuk generated_date agar kompatibel dengan kode lama
+     */
+    public function getGeneratedDateAttribute()
+    {
+        return $this->date;
+    }
 }

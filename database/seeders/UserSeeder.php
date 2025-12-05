@@ -17,6 +17,8 @@ class UserSeeder extends Seeder
                 'password'        => bcrypt('12345678'),
                 'identity_number' => null,
                 'user_type'       => 'admin',
+                'vehicle_type'    => null,
+                'vehicle_plate_number' => null,
             ],
             [
                 'name'            => 'Petugas',
@@ -24,6 +26,17 @@ class UserSeeder extends Seeder
                 'password'        => bcrypt('password'),
                 'identity_number' => null,
                 'user_type'       => 'pegawai',
+                'vehicle_type'    => null,
+                'vehicle_plate_number' => null,
+            ],
+            [
+                'name'            => 'Pegawai Contoh',
+                'username'        => 'pegawai',
+                'password'        => bcrypt('password'),
+                'identity_number' => 'NIP123456',
+                'user_type'       => 'pegawai',
+                'vehicle_type'    => null,
+                'vehicle_plate_number' => null,
             ],
             [
                 'name'            => 'Rendi',
@@ -31,6 +44,8 @@ class UserSeeder extends Seeder
                 'password'        => bcrypt('password'),
                 'identity_number' => 'NIM123456',
                 'user_type'       => 'mahasiswa',
+                'vehicle_type'    => 'motor',
+                'vehicle_plate_number' => 'N 1234 AB',
             ],
         ]);
     }

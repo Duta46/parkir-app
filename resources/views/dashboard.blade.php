@@ -123,24 +123,30 @@
         <!-- QR Code Display - only for admin/petugas -->
         <div class="col-lg-6 mb-4">
             <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
+                <div class="card-header">
                     <h5 class="card-title mb-0">QR Code Saya</h5>
-                    <button id="refreshQrBtn" class="btn btn-sm btn-primary">
-                        <i class="ti ti-refresh ti-xs"></i> Perbarui
-                    </button>
                 </div>
                 <div class="card-body text-center">
                     <div class="mb-4">
                         @if($qrCodeModel ?? null)
-                            @if(strpos($qrCodeImage, '<svg') !== false)
-                                <div class="text-center">
-                                    {!! $qrCodeImage !!} <!-- Render SVG directly -->
-                                </div>
+                            @if($qrCodeModel->expires_at->isToday())
+                                @if(strpos($qrCodeImage, '<svg') !== false)
+                                    <div class="text-center">
+                                        <div id="qrCodeContainer">
+                                            {!! $qrCodeImage !!} <!-- Render SVG directly -->
+                                        </div>
+                                    </div>
+                                @else
+                                    <div class="text-center">
+                                        <img id="qrCodeContainer"
+                                             src="data:image/png;base64,{{ base64_encode($qrCodeImage) }}"
+                                             alt="QR Code Anda"
+                                             class="img-fluid border border-1 rounded"
+                                             style="max-width: 250px; height: auto;">
+                                    </div>
+                                @endif
                             @else
-                                <img src="data:image/png;base64,{{ base64_encode($qrCodeImage) }}"
-                                     alt="QR Code Anda"
-                                     class="img-fluid border border-1 rounded"
-                                     style="max-width: 250px; height: auto;">
+                                <p class="text-warning">QR code saat ini sudah tidak berlaku. QR code baru akan tersedia setiap hari.</p>
                             @endif
                         @else
                             <p class="text-danger">Tidak ada QR code tersedia</p>
@@ -148,28 +154,40 @@
                     </div>
 
                     @if($qrCodeModel ?? null)
-                        <p class="mb-2">
-                            <small class="text-muted">Berlaku sampai: {{ $qrCodeModel->expires_at->format('H:i:s') }}</small>
-                        </p>
-                        <p>
-                            <small class="text-muted">Dibuat pada: {{ $qrCodeModel->date->format('Y-m-d') }}</small>
-                        </p>
-                        @if($qrCodeModel->is_used)
-                            <p class="text-danger fw-bold">QR Code ini telah digunakan</p>
+                        @if($qrCodeModel->expires_at->isToday())
+                            <p class="mb-2">
+                                <small class="text-muted">Berlaku sampai: {{ $qrCodeModel->expires_at->format('H:i:s') }}</small>
+                            </p>
+                            <p>
+                                <small class="text-muted">Dibuat pada: {{ $qrCodeModel->date->format('Y-m-d') }}</small>
+                            </p>
+                            @if($qrCodeModel->is_used)
+                                <p class="text-danger fw-bold">QR Code ini telah digunakan</p>
+                            @else
+                                <p class="text-success fw-bold">QR Code aktif</p>
+                            @endif
                         @else
-                            <p class="text-success fw-bold">QR Code aktif</p>
+                            <p class="text-muted">QR code berlaku untuk tanggal: {{ $qrCodeModel->date->format('Y-m-d') }}</p>
                         @endif
                     @endif
 
-                    <a href="{{ route('qr-code.show') }}" class="btn btn-outline-primary">
-                        Lihat QR Code Saya
-                    </a>
+                    <div class="d-flex justify-content-center gap-2">
+                        <a href="{{ route('qr-code.show') }}" class="btn btn-outline-primary">
+                            Lihat QR Code Saya
+                        </a>
+
+                        @if($qrCodeModel ?? null && $qrCodeModel->expires_at->isToday())
+                            <button type="button" class="btn btn-outline-success" onclick="downloadQRCode()">
+                                <i class="ti ti-download"></i> Download QR Code
+                            </button>
+                        @endif
+                    </div>
                 </div>
             </div>
         </div>
     </div>
     @endif
-        
+
 
     <!-- Entry/Exit History -->
     <div class="card">
@@ -196,7 +214,7 @@
                                 ->limit(5)
                                 ->get();
                         @endphp
-                        
+
                         @forelse($entries as $entry)
                         <tr>
                             <td>
@@ -239,60 +257,26 @@
 </div>
 
 <script>
-    // QR Code refresh functionality
-    const refreshQrBtn = document.getElementById('refreshQrBtn');
-    if (refreshQrBtn) {
-        refreshQrBtn.addEventListener('click', function() {
-            this.disabled = true;
-            this.innerHTML = '<i class="ti ti-loader ti-spin ti-xs"></i> Menghasilkan...';
-            
-            fetch('{{ route("qr-code.generate") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Reload the page to show the new QR code
-                    location.reload();
-                } else {
-                    alert('Failed to generate QR code: ' + (data.message || 'Unknown error'));
-                    this.disabled = false;
-                    this.innerHTML = '<i class="ti ti-refresh ti-xs"></i> Perbarui';
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred while generating QR code');
-                this.disabled = false;
-                this.innerHTML = '<i class="ti ti-refresh ti-xs"></i> Perbarui';
-            });
-        });
-    }
-
     // Scan functionality
     document.getElementById('scanEntryBtn').addEventListener('click', function() {
         const qrCode = document.getElementById('qrCodeInput').value.trim();
-        
+
         if (!qrCode) {
             showScanStatus('Please enter a QR code or scan using the camera', 'error');
             return;
         }
-        
+
         scanQRCode(qrCode, 'entry');
     });
 
     document.getElementById('scanExitBtn').addEventListener('click', function() {
         const qrCode = document.getElementById('qrCodeInput').value.trim();
-        
+
         if (!qrCode) {
             showScanStatus('Please enter a QR code or scan using the camera', 'error');
             return;
         }
-        
+
         scanQRCode(qrCode, 'exit');
     });
 
@@ -354,13 +338,86 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         `;
-        
+
         // Auto-dismiss after 5 seconds
         setTimeout(() => {
             if (statusDiv.querySelector('.alert')) {
                 statusDiv.innerHTML = '';
             }
         }, 5000);
+    }
+
+    // Function to download QR code as PNG
+    function downloadQRCode() {
+        const qrCodeContainer = document.getElementById('qrCodeContainer');
+
+        if (!qrCodeContainer) {
+            console.error('QR Code container not found');
+            return;
+        }
+
+        // Check if the element is an SVG or an image
+        if (qrCodeContainer.tagName.toLowerCase() === 'svg') {
+            // Handle SVG download
+            downloadSVGAsPNG(qrCodeContainer);
+        } else if (qrCodeContainer.tagName.toLowerCase() === 'img') {
+            // Handle image download
+            downloadImageAsPNG(qrCodeContainer);
+        } else {
+            // If it's a div containing the SVG
+            const svgElement = qrCodeContainer.querySelector('svg');
+            if (svgElement) {
+                downloadSVGAsPNG(svgElement);
+            } else {
+                console.error('QR Code element not found');
+            }
+        }
+    }
+
+    function downloadSVGAsPNG(svgElement) {
+        const svgData = new XMLSerializer().serializeToString(svgElement);
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        const svgSize = svgElement.viewBox.baseVal || { width: 200, height: 200 };
+        canvas.width = svgSize.width;
+        canvas.height = svgSize.height;
+
+        const img = new Image();
+        img.onload = function() {
+            ctx.drawImage(img, 0, 0, svgSize.width, svgSize.height);
+
+            const pngUrl = canvas.toDataURL('image/png');
+            const downloadLink = document.createElement('a');
+            downloadLink.href = pngUrl;
+            downloadLink.download = 'qr-code.png';
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        };
+
+        // Create a blob URL for the SVG
+        const blob = new Blob([svgData], { type: 'image/svg+xml' });
+        const url = URL.createObjectURL(blob);
+        img.src = url;
+    }
+
+    function downloadImageAsPNG(imgElement) {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = imgElement.width;
+        canvas.height = imgElement.height;
+
+        ctx.drawImage(imgElement, 0, 0);
+
+        const pngUrl = canvas.toDataURL('image/png');
+        const downloadLink = document.createElement('a');
+        downloadLink.href = pngUrl;
+        downloadLink.download = 'qr-code.png';
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
     }
 </script>
 @endsection

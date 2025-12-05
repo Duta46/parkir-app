@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\URL;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,6 +20,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        require base_path('routes/console.php');
+        // require base_path('routes/console.php');
+
+        // Force HTTPS in production or when using ngrok
+        if(config('app.env') === 'production' || str_contains(request()->getHost(), 'ngrok-free.app')) {
+            URL::forceScheme('https');
+
+            // Also set secure headers for ngrok
+            $this->app['request']->server->set('HTTPS', 'on');
+            $this->app['request']->server->set('HTTP_X_FORWARDED_PROTO', 'https');
+        }
     }
 }
