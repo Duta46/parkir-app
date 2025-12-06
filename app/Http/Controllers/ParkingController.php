@@ -495,4 +495,60 @@ class ParkingController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Tampilkan riwayat parkir lengkap untuk pengguna biasa (hanya data milik mereka sendiri)
+     */
+    public function userParkingHistory()
+    {
+        $user = Auth::user();
+
+        // Ambil entri parkir milik pengguna yang sedang login
+        $parkingEntries = ParkingEntry::with(['qrCode:id,user_id,code,date', 'parkingExit:id,parking_entry_id,exit_time,parking_fee'])
+            ->where('user_id', $user->id)
+            ->orderBy('entry_time', 'desc')
+            ->paginate(15);
+
+        // Ambil statistik untuk pengguna
+        $totalEntries = ParkingEntry::where('user_id', $user->id)->count();
+        $activeEntries = ParkingEntry::where('user_id', $user->id)
+            ->whereDoesntHave('parkingExit')
+            ->count();
+        $totalExits = ParkingEntry::where('user_id', $user->id)
+            ->has('parkingExit')
+            ->count();
+        $totalSpent = ParkingExit::join('parking_entries', 'parking_exits.parking_entry_id', '=', 'parking_entries.id')
+            ->where('parking_entries.user_id', $user->id)
+            ->sum('parking_fee');
+
+        return view('parking.user-history', compact(
+            'parkingEntries',
+            'totalEntries',
+            'activeEntries',
+            'totalExits',
+            'totalSpent'
+        ));
+    }
+
+    /**
+     * Tampilkan detail entri parkir dan barcode-nya
+     */
+    public function viewParkingDetail($id)
+    {
+        $user = Auth::user();
+
+        // Ambil entri parkir milik pengguna yang sedang login
+        $parkingEntry = ParkingEntry::with(['qrCode', 'parkingExit', 'user:id,name,username'])
+            ->where('user_id', $user->id)
+            ->findOrFail($id);
+
+        // Generate QR code image dari QR code yang terkait
+        $qrCodeImage = '';
+        if ($parkingEntry->qrCode) {
+            $qrCodeService = app(\App\Services\QRCodeService::class);
+            $qrCodeImage = $qrCodeService->generateQRCodeImage($parkingEntry->qrCode->code);
+        }
+
+        return view('parking.detail', compact('parkingEntry', 'qrCodeImage'));
+    }
 }

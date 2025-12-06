@@ -30,6 +30,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/scan-barcode', [ParkingController::class, 'scanBarcode'])->middleware('canAccessScanPage')->name('scan.barcode');
 
     // Parking management routes for admin
+    // Parking menu for users - view their complete parking data
+    Route::get('/parking-history', [ParkingController::class, 'userParkingHistory'])->middleware(['auth', 'canAccessScanPage'])->name('parking.history');
+    Route::get('/parking-history/{id}', [ParkingController::class, 'viewParkingDetail'])->middleware(['auth', 'canAccessScanPage'])->name('parking.history.detail');
+
     Route::prefix('parking-management')->middleware('role:Admin')->group(function() {
         Route::get('/', [ParkingManagementController::class, 'index'])->name('parking.management.index');
         Route::get('/all', [ParkingManagementController::class, 'all'])->name('parking.management.all');

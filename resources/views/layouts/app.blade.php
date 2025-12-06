@@ -157,6 +157,12 @@
             @elseif(auth()->user()->hasRole('Pengguna') || in_array(auth()->user()->user_type, ['Dosen', 'Mahasiswa']))
             <!-- Parking Menu for Dosen and Mahasiswa -->
             <li class="menu-item">
+              <a href="{{ route('parking.history') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-car"></i>
+                <div data-i18n="ParkingHistory">Parkir</div>
+              </a>
+            </li>
+            <li class="menu-item">
               <a href="{{ route('scan.barcode.page') }}" class="menu-link">
                 <i class="menu-icon icon-base ti tabler-scan"></i>
                 <div data-i18n="ScanBarcode">Scan Barcode</div>
