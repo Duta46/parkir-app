@@ -44,6 +44,8 @@ class UserController extends Controller
             'user_type' => 'required|in:mahasiswa,dosen,pegawai,admin',
             'role' => 'required|in:Pengguna,Admin',
             'identity_number' => 'nullable|string|max:255',
+            'vehicle_type' => 'nullable|string|max:50',
+            'vehicle_plate_number' => 'nullable|string|max:20',
         ]);
 
         if ($validator->fails()) {
@@ -56,6 +58,8 @@ class UserController extends Controller
             'password' => Hash::make($request->password),
             'user_type' => $request->user_type,
             'identity_number' => $request->identity_number,
+            'vehicle_type' => $request->vehicle_type ?? null,
+            'vehicle_plate_number' => $request->vehicle_plate_number ?? null,
         ]);
 
         // Assign role based on the request
@@ -96,6 +100,8 @@ class UserController extends Controller
             'role' => 'required|in:Pengguna,Admin',
             'identity_number' => 'nullable|string|max:255',
             'password' => 'nullable|string|min:8|confirmed',
+            'vehicle_type' => 'nullable|string|max:50',
+            'vehicle_plate_number' => 'nullable|string|max:20',
         ]);
 
         if ($validator->fails()) {
@@ -107,6 +113,8 @@ class UserController extends Controller
             'username' => $request->username,
             'user_type' => $request->user_type,
             'identity_number' => $request->identity_number,
+            'vehicle_type' => $request->vehicle_type ?? null,
+            'vehicle_plate_number' => $request->vehicle_plate_number ?? null,
         ]);
 
         // Sync roles based on the request

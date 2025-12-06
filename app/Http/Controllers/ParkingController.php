@@ -175,23 +175,27 @@ class ParkingController extends Controller
                 ], 400);
             }
 
-            // Generate kode parkir
-            $kodeParkir = app(\App\Services\ParkingTransactionService::class)->generateKodeParkir();
-
             // Ambil data kendaraan dari pengguna jika tersedia
             $userEntry = \App\Models\User::find($entryUserId);
             $vehicleType = $userEntry ? $userEntry->vehicle_type : ($request->vehicle_type ?? null);
             $vehiclePlateNumber = $userEntry ? $userEntry->vehicle_plate_number : ($request->vehicle_plate_number ?? null);
 
-            // Buat catatan masuk parkir
+            // Buat catatan masuk parkir sementara tanpa kode parkir
             $parkingEntry = ParkingEntry::create([
-                'kode_parkir' => $kodeParkir,
                 'user_id' => $entryUserId,
                 'qr_code_id' => $qrCodeModel->id,
                 'entry_time' => Carbon::now(),
                 'entry_location' => $request->entry_location ?? null,
                 'vehicle_type' => $vehicleType,
                 'vehicle_plate_number' => $vehiclePlateNumber,
+            ]);
+
+            // Generate kode parkir berdasarkan ID parking entry yang baru dibuat
+            $kodeParkir = app(\App\Services\ParkingTransactionService::class)->generateKodeParkirFromEntry($parkingEntry);
+
+            // Perbarui kode parkir dengan format baru
+            $parkingEntry->update([
+                'kode_parkir' => $kodeParkir
             ]);
 
             // Tandai QR code sebagai telah digunakan (hanya untuk QR code umum, karena untuk per pengguna hanya bisa digunakan sekali oleh pemiliknya)
@@ -291,9 +295,6 @@ class ParkingController extends Controller
                 }
             }
 
-            // Generate kode parkir unik
-            $kodeParkir = app(\App\Services\ParkingTransactionService::class)->generateKodeParkir();
-
             // Tentukan user_id untuk entri parkir
             // Jika QR code milik admin/petugas, maka entri dibuat untuk pengguna yang sedang login (karena mereka yang menggunakan QR code admin/petugas untuk masuk)
             // Jika QR code umum (tanpa user_id), gunakan user yang sedang login
@@ -329,15 +330,22 @@ class ParkingController extends Controller
             $vehicleType = $userEntry ? $userEntry->vehicle_type : null;
             $vehiclePlateNumber = $userEntry ? $userEntry->vehicle_plate_number : null;
 
-            // Buat catatan masuk parkir
+            // Buat catatan masuk parkir sementara tanpa kode parkir
             $parkingEntry = ParkingEntry::create([
-                'kode_parkir' => $kodeParkir,
                 'user_id' => $entryUserId,
                 'qr_code_id' => $qrCodeModel->id,
                 'entry_time' => Carbon::now(),
                 'entry_location' => $request->entry_location ?? null,
                 'vehicle_type' => $vehicleType,
                 'vehicle_plate_number' => $vehiclePlateNumber,
+            ]);
+
+            // Generate kode parkir berdasarkan ID parking entry yang baru dibuat
+            $kodeParkir = app(\App\Services\ParkingTransactionService::class)->generateKodeParkirFromEntry($parkingEntry);
+
+            // Perbarui kode parkir dengan format baru
+            $parkingEntry->update([
+                'kode_parkir' => $kodeParkir
             ]);
 
             // Update status QR code sebagai digunakan (jika ini adalah QR code umum)

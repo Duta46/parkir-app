@@ -96,19 +96,19 @@
                 </a>
               </div>
               <!-- /Logo -->
-              <h4 class="mb-1">Create an account 🚀</h4>
-              <p class="mb-6">Make your parking management easy and fun!</p>
+              <h4 class="mb-1">Buat Akun 🚀</h4>
+              <p class="mb-6">Buat manajemen parkir Anda mudah dan menyenangkan!</p>
 
               <form id="formAuthentication" class="mb-6" action="{{ route('register') }}" method="POST">
                 @csrf
                 <div class="mb-6 form-control-validation">
-                  <label for="name" class="form-label">Name</label>
+                  <label for="name" class="form-label">Nama</label>
                   <input
                     type="text"
                     class="form-control @error('name') is-invalid @enderror"
                     id="name"
                     name="name"
-                    placeholder="Enter your name"
+                    placeholder="Masukkan nama Anda"
                     value="{{ old('name') }}"
                     autofocus />
                     @error('name')
@@ -116,22 +116,22 @@
                     @enderror
                 </div>
                 <div class="mb-6 form-control-validation">
-                  <label for="username" class="form-label">Username</label>
+                  <label for="username" class="form-label">Nama Pengguna</label>
                   <input
                     type="text"
                     class="form-control @error('username') is-invalid @enderror"
                     id="username"
                     name="username"
-                    placeholder="Enter your username"
+                    placeholder="Masukkan nama pengguna Anda"
                     value="{{ old('username') }}" />
                     @error('username')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
                 <div class="mb-6 form-control-validation">
-                  <label for="user_type" class="form-label">User Type</label>
+                  <label for="user_type" class="form-label">Tipe Pengguna</label>
                   <select class="form-control @error('user_type') is-invalid @enderror" id="user_type" name="user_type" onchange="toggleIdentityField()">
-                    <option value="">Select User Type</option>
+                    <option value="">Pilih Tipe Pengguna</option>
                     <option value="mahasiswa" {{ old('user_type') == 'mahasiswa' ? 'selected' : '' }}>Mahasiswa</option>
                     <option value="dosen" {{ old('user_type') == 'dosen' ? 'selected' : '' }}>Dosen</option>
                   </select>
@@ -140,20 +140,44 @@
                   @enderror
                 </div>
                 <div class="mb-6 form-control-validation" id="identity_field" style="display: none;">
-                  <label for="identity_number" class="form-label" id="identity_label">NIM (for Mahasiswa)</label>
+                  <label for="identity_number" class="form-label" id="identity_label">NIM (untuk Mahasiswa)</label>
                   <input
                     type="text"
                     class="form-control @error('identity_number') is-invalid @enderror"
                     id="identity_number"
                     name="identity_number"
-                    placeholder="Enter your NIM"
+                    placeholder="Masukkan NIM Anda"
                     value="{{ old('identity_number') }}" />
                     @error('identity_number')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
+                <div class="mb-6 form-control-validation">
+                  <label for="vehicle_type" class="form-label">Jenis Kendaraan</label>
+                  <select class="form-control @error('vehicle_type') is-invalid @enderror" id="vehicle_type" name="vehicle_type">
+                    <option value="">Pilih Jenis Kendaraan</option>
+                    <option value="motorcycle" {{ old('vehicle_type') == 'motorcycle' ? 'selected' : '' }}>Motor</option>
+                    <option value="car" {{ old('vehicle_type') == 'car' ? 'selected' : '' }}>Mobil</option>
+                  </select>
+                  @error('vehicle_type')
+                      <div class="invalid-feedback">{{ $message }}</div>
+                  @enderror
+                </div>
+                <div class="mb-6 form-control-validation">
+                  <label for="vehicle_plate_number" class="form-label">Nomor Plat Kendaraan</label>
+                  <input
+                    type="text"
+                    class="form-control @error('vehicle_plate_number') is-invalid @enderror"
+                    id="vehicle_plate_number"
+                    name="vehicle_plate_number"
+                    placeholder="Masukkan nomor plat kendaraan Anda"
+                    value="{{ old('vehicle_plate_number') }}" />
+                    @error('vehicle_plate_number')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
                 <div class="mb-6 form-password-toggle form-control-validation">
-                  <label class="form-label" for="password">Password</label>
+                  <label class="form-label" for="password">Kata Sandi</label>
                   <div class="input-group input-group-merge">
                     <input
                       type="password"
@@ -169,7 +193,7 @@
                   </div>
                 </div>
                 <div class="mb-6 form-password-toggle form-control-validation">
-                  <label class="form-label" for="password_confirmation">Confirm Password</label>
+                  <label class="form-label" for="password_confirmation">Konfirmasi Kata Sandi</label>
                   <div class="input-group input-group-merge">
                     <input
                       type="password"
@@ -185,23 +209,23 @@
                   <div class="form-check mb-0 ms-2">
                     <input class="form-check-input" type="checkbox" id="terms-conditions" name="terms" />
                     <label class="form-check-label" for="terms-conditions">
-                      I agree to
-                      <a href="javascript:void(0);">privacy policy & terms</a>
+                      Saya setuju dengan
+                      <a href="javascript:void(0);">kebijakan privasi & ketentuan</a>
                     </label>
                   </div>
                 </div>
-                <button class="btn btn-primary d-grid w-100">Sign up</button>
+                <button class="btn btn-primary d-grid w-100">Daftar</button>
               </form>
 
               <p class="text-center">
-                <span>Already have an account?</span>
+                <span>Sudah punya akun?</span>
                 <a href="{{ route('login') }}">
-                  <span>Sign in instead</span>
+                  <span>Masuk di sini</span>
                 </a>
               </p>
 
               <div class="divider my-6">
-                <div class="divider-text">or</div>
+                <div class="divider-text">atau</div>
               </div>
 
               <div class="d-flex justify-content-center">
@@ -263,13 +287,13 @@
 
         if (userType === 'mahasiswa') {
           identityField.style.display = 'block';
-          identityLabel.textContent = 'NIM (for Mahasiswa)';
-          identityInput.placeholder = 'Enter your NIM';
+          identityLabel.textContent = 'NIM (untuk Mahasiswa)';
+          identityInput.placeholder = 'Masukkan NIM Anda';
           identityInput.name = 'identity_number';
         } else if (userType === 'dosen') {
           identityField.style.display = 'block';
-          identityLabel.textContent = 'NIP/NUP (for Dosen)';
-          identityInput.placeholder = 'Enter your NIP/NUP';
+          identityLabel.textContent = 'NIP/NUP (untuk Dosen)';
+          identityInput.placeholder = 'Masukkan NIP/NUP Anda';
           identityInput.name = 'identity_number';
         } else {
           identityField.style.display = 'none';

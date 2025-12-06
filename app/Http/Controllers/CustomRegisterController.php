@@ -35,6 +35,8 @@ class CustomRegisterController extends Controller
                     $fail('NIP/NUP must be at least 6 characters.');
                 }
             }, 'unique:users,identity_number'],
+            'vehicle_type' => ['required', 'string', 'max:50'],
+            'vehicle_plate_number' => ['required', 'string', 'max:20'],
             'password' => ['required', 'confirmed', Password::defaults()],
             'terms' => ['accepted'],
         ]);
@@ -45,6 +47,8 @@ class CustomRegisterController extends Controller
             'identity_number' => $request->identity_number,
             'password' => Hash::make($request->password),
             'user_type' => $request->user_type,
+            'vehicle_type' => $request->vehicle_type,
+            'vehicle_plate_number' => $request->vehicle_plate_number,
         ]);
 
         // Assign role 'Pengguna' to the newly registered user

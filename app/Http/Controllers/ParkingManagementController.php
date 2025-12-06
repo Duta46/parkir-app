@@ -248,17 +248,22 @@ class ParkingManagementController extends Controller
         $user = User::find($validated['user_id']);
         $dailyQr = $qrCodeService->generateDailyQRCode($user, $validated['entry_time']->format('Y-m-d'));
 
-        // Generate kode parkir
-        $kodeParkir = app(\App\Services\ParkingTransactionService::class)->generateKodeParkir();
-
+        // Buat catatan masuk parkir sementara tanpa kode parkir
         $parkingEntry = ParkingEntry::create([
-            'kode_parkir' => $kodeParkir,
             'user_id' => $validated['user_id'],
             'qr_code_id' => $dailyQr->id,
             'entry_time' => $validated['entry_time'],
             'entry_location' => $validated['entry_location'],
             'vehicle_type' => $validated['vehicle_type'],
             'vehicle_plate_number' => $validated['vehicle_plate_number'],
+        ]);
+
+        // Generate kode parkir berdasarkan ID parking entry yang baru dibuat
+        $kodeParkir = app(\App\Services\ParkingTransactionService::class)->generateKodeParkirFromEntry($parkingEntry);
+
+        // Perbarui kode parkir dengan format baru
+        $parkingEntry->update([
+            'kode_parkir' => $kodeParkir
         ]);
 
         // Tandai QR code sebagai digunakan
