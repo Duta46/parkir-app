@@ -45,8 +45,10 @@ class CustomRegisterController extends Controller
             'identity_number' => $request->identity_number,
             'password' => Hash::make($request->password),
             'user_type' => $request->user_type,
-            'role' => 'User', // Default role for regular users
         ]);
+
+        // Assign role 'Pengguna' to the newly registered user
+        $user->assignRole('Pengguna');
 
         // Login user setelah registrasi
         Auth::login($user);

@@ -67,15 +67,24 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="user_type" class="form-label">Tipe Pengguna</label>
-                                    <select class="form-control @error('user_type') is-invalid @enderror" id="user_type" name="user_type" required>
-                                        <option value="">Pilih Tipe Pengguna</option>
-                                        <option value="mahasiswa" {{ old('user_type') == 'mahasiswa' ? 'selected' : '' }}>Mahasiswa</option>
-                                        <option value="dosen" {{ old('user_type') == 'dosen' ? 'selected' : '' }}>Dosen</option>
-                                        <option value="pegawai" {{ old('user_type') == 'pegawai' ? 'selected' : '' }}>Pegawai</option>
-                                        <option value="admin" {{ old('user_type') == 'admin' ? 'selected' : '' }}>Admin</option>
+                                    <label for="identity_number" class="form-label">Nomor Identitas (NIM/NIP/NUP)</label>
+                                    <input type="text" class="form-control @error('identity_number') is-invalid @enderror" id="identity_number" name="identity_number" value="{{ old('identity_number') }}">
+                                    @error('identity_number')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="role" class="form-label">Peran</label>
+                                    <select class="form-control @error('role') is-invalid @enderror" id="role" name="role" required>
+                                        <option value="">Pilih Peran</option>
+                                        <option value="Pengguna" {{ old('role') == 'Pengguna' ? 'selected' : '' }}>Pengguna</option>
+                                        <option value="Admin" {{ old('role') == 'Admin' ? 'selected' : '' }}>Admin</option>
                                     </select>
-                                    @error('user_type')
+                                    @error('role')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>

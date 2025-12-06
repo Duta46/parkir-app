@@ -129,13 +129,6 @@
                     @enderror
                 </div>
                 <div class="mb-6 form-control-validation">
-                  <label for="email" class="form-label">Email</label>
-                  <input type="email" class="form-control @error('email') is-invalid @enderror" id="email" name="email" placeholder="Enter your email" value="{{ old('email') }}" />
-                  @error('email')
-                      <div class="invalid-feedback">{{ $message }}</div>
-                  @enderror
-                </div>
-                <div class="mb-6 form-control-validation">
                   <label for="user_type" class="form-label">User Type</label>
                   <select class="form-control @error('user_type') is-invalid @enderror" id="user_type" name="user_type" onchange="toggleIdentityField()">
                     <option value="">Select User Type</option>

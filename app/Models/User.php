@@ -24,7 +24,6 @@ class User extends Authenticatable
         'identity_number',
         'user_type',
         'password',
-        'role',
         'vehicle_type',
         'vehicle_plate_number',
     ];

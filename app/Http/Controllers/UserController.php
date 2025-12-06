@@ -42,7 +42,7 @@ class UserController extends Controller
             'username' => 'required|string|unique:users,username',
             'password' => 'required|string|min:8|confirmed',
             'user_type' => 'required|in:mahasiswa,dosen,pegawai,admin',
-            'role' => 'required|in:User,Admin',
+            'role' => 'required|in:Pengguna,Admin',
             'identity_number' => 'nullable|string|max:255',
         ]);
 
@@ -50,14 +50,20 @@ class UserController extends Controller
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        User::create([
+        $user = User::create([
             'name' => $request->name,
             'username' => $request->username,
             'password' => Hash::make($request->password),
             'user_type' => $request->user_type,
-            'role' => $request->role,
             'identity_number' => $request->identity_number,
         ]);
+
+        // Assign role based on the request
+        if ($request->role === 'Admin') {
+            $user->assignRole('Admin');
+        } else {
+            $user->assignRole('Pengguna');
+        }
 
         return redirect()->route('users.index')->with('success', 'User created successfully.');
     }
@@ -87,7 +93,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'username' => 'required|string|unique:users,username,' . $user->id,
             'user_type' => 'required|in:mahasiswa,dosen,pegawai,admin',
-            'role' => 'required|in:User,Admin',
+            'role' => 'required|in:Pengguna,Admin',
             'identity_number' => 'nullable|string|max:255',
             'password' => 'nullable|string|min:8|confirmed',
         ]);
@@ -100,9 +106,16 @@ class UserController extends Controller
             'name' => $request->name,
             'username' => $request->username,
             'user_type' => $request->user_type,
-            'role' => $request->role,
             'identity_number' => $request->identity_number,
         ]);
+
+        // Sync roles based on the request
+        $user->syncRoles([]);
+        if ($request->role === 'Admin') {
+            $user->assignRole('Admin');
+        } else {
+            $user->assignRole('Pengguna');
+        }
 
         if ($request->password) {
             $user->update(['password' => Hash::make($request->password)]);
