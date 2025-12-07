@@ -58,6 +58,7 @@
       background-color: #ff9800;
       border-color: #ff9800;
     }
+    
     .btn-orange:hover,
     .btn-orange:focus,
     .btn-orange:active {
@@ -65,7 +66,7 @@
       border-color: #fb8c00;
       color: #fff;
     }
-    /* Mengubah warna teks link ke orange */
+
     .authentication-inner a,
     .authentication-inner .text-primary {
         color: #ff9800 !important;
@@ -74,7 +75,6 @@
         color: #fb8c00 !important;
     }
     
-    /* Menghilangkan dekorasi ungu pada elemen inner card */
     .authentication-wrapper.authentication-basic .authentication-inner::before,
     .authentication-wrapper.authentication-basic .authentication-inner::after {
         content: none !important;
@@ -83,16 +83,32 @@
         display: none !important;
     }
 
-    /* Mengubah warna fokus kolom input */
     .form-control:focus,
     select:focus {
       border-color: #ff9800 !important;
       box-shadow: 0 0 0 0.25rem rgba(255, 152, 0, 0.25) !important;
     }
+
+    .input-group:focus-within .form-control { 
+    border-color: #ff9800 !important; 
+    z-index: 3; 
+    }
+
+    .input-group.input-group-merge:focus-within {
+        box-shadow: 0 0 0 0.25rem rgba(255, 152, 0, 0.25) !important;
+    }
+
+    .input-group.input-group-merge:focus-within .input-group-text {
+        border-color: #ff9800 !important; 
+        box-shadow: none !important;
+    }
+
+    .input-group:focus-within .form-control:focus {
+        box-shadow: none !important;
+    }
     
-    /* Latar Belakang Gambar */
     body {
-      background-color: #ff9800; /* Warna fallback */
+      background-color: #ff9800;
       background-image: url('{{ asset('assets/images/orange-bg-pattern.png') }}') !important;
       background-size: cover !important;
       background-position: center center !important;
@@ -123,8 +139,8 @@
                 </a>
               </div>
               <!-- /Logo -->
-              <h4 class="mb-1">Welcome! 👋</h4>
-              <p class="mb-6">Please sign-in to your account and start managing parking</p>
+              <h4 class="mb-1">Selamat Datang!</h4>
+              <p class="mb-6">Silakan masuk ke akun anda dan mulailah parkir.</p>
 
               <form id="formAuthentication" class="mb-4" action="{{ route('login') }}" method="POST">
                 @csrf
@@ -135,7 +151,7 @@
                     class="form-control @error('login') is-invalid @enderror"
                     id="login"
                     name="login"
-                    placeholder="Enter your username, NIP, NUP, or NIM"
+                    placeholder="Masukkan username, NIP, NUP, or NIM"
                     value="{{ old('login') }}"
                     autofocus />
                     @error('login')
@@ -162,10 +178,10 @@
                   <div class="d-flex justify-content-between">
                     <div class="form-check mb-0 ms-2">
                       <input class="form-check-input" type="checkbox" id="remember-me" name="remember" {{ old('remember') ? 'checked' : '' }} />
-                      <label class="form-check-label" for="remember-me"> Remember Me </label>
+                      <label class="form-check-label" for="remember-me"> Ingat akun saya </label>
                     </div>
                     <a href="{{ route('password.request') }}">
-                      <p class="mb-0">Forgot Password?</p>
+                      <p class="mb-0">Lupa Password?</p>
                     </a>
                   </div>
                 </div>
@@ -175,9 +191,9 @@
               </form>
 
               <p class="text-center">
-                <span>New on our platform?</span>
+                <span>Anda pengguna baru?</span>
                 <a href="{{ route('register') }}">
-                  <span>Create an account</span>
+                  <span>Sign up disini!</span>
                 </a>
               </p>
 

@@ -47,6 +47,7 @@
         background-color: #ff9800;
         border-color: #ff9800;
       }
+
       .btn-orange:hover,
       .btn-orange:focus,
       .btn-orange:active {
@@ -54,7 +55,7 @@
         border-color: #fb8c00;
         color: #fff;
       }
-      /* Mengubah warna teks link ke orange */
+
       .authentication-inner a,
       .authentication-inner .text-primary {
           color: #ff9800 !important;
@@ -63,7 +64,6 @@
           color: #fb8c00 !important;
       }
       
-      /* Menghilangkan dekorasi ungu pada elemen inner card */
       .authentication-wrapper.authentication-basic .authentication-inner::before,
       .authentication-wrapper.authentication-basic .authentication-inner::after {
           content: none !important;
@@ -72,16 +72,38 @@
           display: none !important;
       }
 
-      /* Mengubah warna fokus kolom input */
       .form-control:focus,
       select:focus {
         border-color: #ff9800 !important;
         box-shadow: 0 0 0 0.25rem rgba(255, 152, 0, 0.25) !important;
       }
+
+      .form-control:focus,
+      select:focus {
+        border-color: #ff9800 !important;
+        box-shadow: 0 0 0 0.25rem rgba(255, 152, 0, 0.25) !important;
+      }
+
+      .input-group:focus-within .form-control { 
+      border-color: #ff9800 !important; 
+      z-index: 3; 
+      }
+
+      .input-group.input-group-merge:focus-within {
+          box-shadow: 0 0 0 0.25rem rgba(255, 152, 0, 0.25) !important;
+      }
+
+      .input-group.input-group-merge:focus-within .input-group-text {
+          border-color: #ff9800 !important; 
+          box-shadow: none !important;
+      }
+
+      .input-group:focus-within .form-control:focus {
+          box-shadow: none !important;
+      }
       
-      /* Latar Belakang Gambar */
       body {
-        background-color: #ff9800; /* Warna fallback */
+        background-color: #ff9800;
         background-image: url('{{ asset('assets/images/orange-bg-pattern.png') }}') !important;
         background-size: cover !important;
         background-position: center center !important;
@@ -109,8 +131,8 @@
                   <span class="app-brand-text demo text-heading fw-bold">Sistem Parkir Universitas PGRI Kanjuruhan Malang</span>
                 </a>
               </div>
-              <h4 class="mb-1">Create an account 🚀</h4>
-              <p class="mb-6">Make your parking management easy and fun!</p>
+              <h4 class="mb-1">Buat akun anda disini!</h4>
+              <p class="mb-6">Website manajemen parkir agar parkirmu terasa lebih mudah.</p>
 
               <form id="formAuthentication" class="mb-6" action="{{ route('register') }}" method="POST">
                 @csrf
@@ -121,7 +143,7 @@
                     class="form-control @error('name') is-invalid @enderror"
                     id="name"
                     name="name"
-                    placeholder="Masukkan nama Anda"
+                    placeholder="Enter your name"
                     value="{{ old('name') }}"
                     autofocus />
                     @error('name')
@@ -135,16 +157,16 @@
                     class="form-control @error('username') is-invalid @enderror"
                     id="username"
                     name="username"
-                    placeholder="Masukkan nama pengguna Anda"
+                    placeholder="Enter your username"
                     value="{{ old('username') }}" />
                     @error('username')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
                 <div class="mb-6 form-control-validation">
-                  <label for="user_type" class="form-label">Tipe Pengguna</label>
+                  <label for="user_type" class="form-label">User Type</label>
                   <select class="form-control @error('user_type') is-invalid @enderror" id="user_type" name="user_type" onchange="toggleIdentityField()">
-                    <option value="">Pilih Tipe Pengguna</option>
+                    <option value="">Select User Type</option>
                     <option value="mahasiswa" {{ old('user_type') == 'mahasiswa' ? 'selected' : '' }}>Mahasiswa</option>
                     <option value="dosen" {{ old('user_type') == 'dosen' ? 'selected' : '' }}>Dosen</option>
                   </select>
@@ -159,7 +181,7 @@
                     class="form-control @error('identity_number') is-invalid @enderror"
                     id="identity_number"
                     name="identity_number"
-                    placeholder="Masukkan NIM Anda"
+                    placeholder="Enter your NIM"
                     value="{{ old('identity_number') }}" />
                     @error('identity_number')
                         <div class="invalid-feedback">{{ $message }}</div>
@@ -206,7 +228,7 @@
                   </div>
                 </div>
                 <div class="mb-6 form-password-toggle form-control-validation">
-                  <label class="form-label" for="password_confirmation">Konfirmasi Kata Sandi</label>
+                  <label class="form-label" for="password_confirmation">Confirm Password</label>
                   <div class="input-group input-group-merge">
                     <input
                       type="password"
@@ -222,8 +244,8 @@
                   <div class="form-check mb-0 ms-2">
                     <input class="form-check-input" type="checkbox" id="terms-conditions" name="terms" />
                     <label class="form-check-label" for="terms-conditions">
-                      Saya setuju dengan
-                      <a href="javascript:void(0);">kebijakan privasi & ketentuan</a>
+                      I agree to
+                      <a href="javascript:void(0);">privacy policy & terms</a>
                     </label>
                   </div>
                 </div>
@@ -231,9 +253,9 @@
               </form>
 
               <p class="text-center">
-                <span>Sudah punya akun?</span>
+                <span>Already have an account?</span>
                 <a href="{{ route('login') }}">
-                  <span>Masuk di sini</span>
+                  <span>Sign in instead</span>
                 </a>
               </p>
 
@@ -292,13 +314,13 @@
 
         if (userType === 'mahasiswa') {
           identityField.style.display = 'block';
-          identityLabel.textContent = 'NIM (untuk Mahasiswa)';
-          identityInput.placeholder = 'Masukkan NIM Anda';
+          identityLabel.textContent = 'NIM (for Mahasiswa)';
+          identityInput.placeholder = 'Enter your NIM';
           identityInput.name = 'identity_number';
         } else if (userType === 'dosen') {
           identityField.style.display = 'block';
-          identityLabel.textContent = 'NIP/NUP (untuk Dosen)';
-          identityInput.placeholder = 'Masukkan NIP/NUP Anda';
+          identityLabel.textContent = 'NIP/NUP (for Dosen)';
+          identityInput.placeholder = 'Enter your NIP/NUP';
           identityInput.name = 'identity_number';
         } else {
           identityField.style.display = 'none';
