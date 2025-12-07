@@ -28,6 +28,30 @@ class ParkingTransactionService
     }
 
     /**
+     * Generate kode parkir berdasarkan ID entri yang sudah dibuat
+     *
+     * @param ParkingEntry $parkingEntry
+     * @return string
+     */
+    public function generateKodeParkirFromEntry(ParkingEntry $parkingEntry): string
+    {
+        // Ambil ID dari parking entry
+        $entryId = $parkingEntry->id;
+
+        // Ambil nomor plat kendaraan dari entri
+        $vehiclePlate = $parkingEntry->vehicle_plate_number ?? 'NO_PLATE';
+
+        // Bersihkan nomor plat dari karakter spesial
+        $cleanPlate = preg_replace('/[^A-Za-z0-9\s]/', '_', $vehiclePlate);
+
+        // Format tanggal menjadi DDMMYY
+        $formattedDate = Carbon::now()->format('dmy');
+
+        // Gabungkan menjadi format: id-plat-tanggal
+        return $entryId . '-' . $cleanPlate . '-' . $formattedDate;
+    }
+
+    /**
      * Generate kode transaksi unik
      *
      * @return string
