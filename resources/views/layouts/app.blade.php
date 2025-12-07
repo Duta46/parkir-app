@@ -63,6 +63,51 @@
     @yield('styles')
   </head>
 
+  <style>
+    .layout-menu,
+    .menu-vertical {
+        background-color: #11224D !important;
+    }
+
+    .menu-inner .menu-item .menu-link {
+        color: #ffffff !important; 
+    }
+
+    .menu-inner .menu-item.active > .menu-link,
+    .menu-inner .menu-item.open > .menu-link {
+        background-color: #fb8c00 !important;
+        color: #ffffff !important;
+    }
+
+    .menu-vertical .ti,
+    .layout-menu .ti {
+        background-color: #ffffff !important; 
+    }
+
+    .tabler-x {
+    }
+
+    .menu-inner .menu-item:not(.active):hover > .menu-link {
+        background-color: #f77f00 !important;
+        color: #ffffff !important;
+    }
+
+    .menu .menu-sub .menu-item .menu-link::before {
+        color: #ffffff !important;
+    }
+
+    .menu .menu-sub > .menu-item > .menu-link::before {
+        background-color: #ffffff !important;
+    }
+
+    .menu-toggle::after {
+        background-color: #ffffff !important;
+    }
+
+    .app-brand-text.demo.menu-text {
+        color: #ffffff !important; 
+    }
+  </style>
   <body>
     <!-- Layout wrapper -->
     <div class="layout-wrapper layout-content-navbar">
@@ -113,7 +158,7 @@
             <li class="menu-item">
               <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon icon-base ti tabler-car"></i>
-                <div data-i18n="ParkingManagement">Manajemen Parkir</div>
+                <div data-i18n="Manajemen Parkir">Manajemen Parkir</div>
               </a>
               <ul class="menu-sub">
                 <li class="menu-item">
@@ -123,12 +168,12 @@
                 </li>
                 <li class="menu-item">
                   <a href="{{ route('parking.transactions.index') }}" class="menu-link">
-                    <div data-i18n="Transactions">Transaksi</div>
+                    <div data-i18n="Transaksi">Transaksi</div>
                   </a>
                 </li>
                 <li class="menu-item">
                   <a href="{{ route('parking.management.all') }}" class="menu-link">
-                    <div data-i18n="AllRecords">Semua Data</div>
+                    <div data-i18n="Semua Data">Semua Data</div>
                   </a>
                 </li>
               </ul>
@@ -138,13 +183,13 @@
             <li class="menu-item">
               <a href="{{ route('parking.history') }}" class="menu-link">
                 <i class="menu-icon icon-base ti tabler-car"></i>
-                <div data-i18n="ParkingHistory">Parkir</div>
+                <div data-i18n="Parkir">Parkir</div>
               </a>
             </li>
             <li class="menu-item">
               <a href="{{ route('scan.barcode.page') }}" class="menu-link">
                 <i class="menu-icon icon-base ti tabler-scan"></i>
-                <div data-i18n="ScanBarcode">Scan Barcode</div>
+                <div data-i18n="ScanBarcode">Pindai Barcode</div>
               </a>
             </li>
             @endif
@@ -153,14 +198,14 @@
             <li class="menu-item">
               <a href="/users" class="menu-link">
                 <i class="menu-icon icon-base ti tabler-users"></i>
-                <div data-i18n="Users">Users</div>
+                <div data-i18n="Pengguna">Pengguna</div>
               </a>
             </li>
 
             <li class="menu-item">
               <a href="/settings" class="menu-link">
                 <i class="menu-icon icon-base ti tabler-settings"></i>
-                <div data-i18n="Settings">Settings</div>
+                <div data-i18n="Pengaturan">Pengaturan</div>
               </a>
             </li>
 
