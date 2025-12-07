@@ -201,7 +201,6 @@
                         <tr>
                             <th>Peristiwa</th>
                             <th>Waktu</th>
-                            <th>Lokasi</th>
                             <th>Biaya</th>
                             <th>Status</th>
                         </tr>
@@ -220,8 +219,7 @@
                             <td>
                                 <span class="badge bg-success">Masuk</span>
                             </td>
-                            <td>{{ $entry->entry_time->format('d/m/Y H:i:s') }}</td>
-                            <td>{{ $entry->kode_parkir }}<br><small class="text-muted">Kode untuk keluar</small></td>
+                            <td>{{ $entry->entry_time->format('d/m/Y H:i:s') }}<br><small class="text-muted">{{ $entry->kode_parkir }}</small></td>
                             <td>N/A</td>
                             <td>
                                 @if($entry->parkingExit)
@@ -237,7 +235,6 @@
                                 <span class="badge bg-danger">Keluar</span>
                             </td>
                             <td>{{ $entry->parkingExit->exit_time->format('d/m/Y H:i:s') }}</td>
-                            <td>{{ $entry->parkingExit->exit_location ?? 'N/A' }}</td>
                             <td>Rp{{ number_format($entry->parkingExit->parking_fee, 0, ',', '.') }}</td>
                             <td>
                                 <span class="badge bg-secondary">Selesai</span>
@@ -246,7 +243,7 @@
                         @endif
                         @empty
                         <tr>
-                            <td colspan="5" class="text-center text-muted">Tidak ditemukan riwayat parkir</td>
+                            <td colspan="4" class="text-center text-muted">Tidak ditemukan riwayat parkir</td>
                         </tr>
                         @endforelse
                     </tbody>

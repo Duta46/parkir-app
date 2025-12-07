@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->string('vehicle_type')->nullable()->after('user_type'); // Jenis kendaraan (mobil, motor, dll)
-            $table->string('vehicle_plate_number')->nullable()->after('vehicle_type'); // Nomor plat kendaraan
+            $table->string('vehicle_type')->nullable()->after('user_type');
+            $table->string('vehicle_plate_number')->nullable()->after('vehicle_type');
         });
     }
 

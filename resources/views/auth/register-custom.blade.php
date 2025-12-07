@@ -143,7 +143,7 @@
                     class="form-control @error('name') is-invalid @enderror"
                     id="name"
                     name="name"
-                    placeholder="Masukkan Nama Lengkap"
+                    placeholder="Enter your name"
                     value="{{ old('name') }}"
                     autofocus />
                     @error('name')
@@ -151,22 +151,22 @@
                     @enderror
                 </div>
                 <div class="mb-6 form-control-validation">
-                  <label for="username" class="form-label">Username</label>
+                  <label for="username" class="form-label">Nama Pengguna</label>
                   <input
                     type="text"
                     class="form-control @error('username') is-invalid @enderror"
                     id="username"
                     name="username"
-                    placeholder="Masukkan Username"
+                    placeholder="Enter your username"
                     value="{{ old('username') }}" />
                     @error('username')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
                 <div class="mb-6 form-control-validation">
-                  <label for="user_type" class="form-label">Jenis Pengguna</label>
+                  <label for="user_type" class="form-label">User Type</label>
                   <select class="form-control @error('user_type') is-invalid @enderror" id="user_type" name="user_type" onchange="toggleIdentityField()">
-                    <option value="">Pilih Jenis Pengguna</option>
+                    <option value="">Select User Type</option>
                     <option value="mahasiswa" {{ old('user_type') == 'mahasiswa' ? 'selected' : '' }}>Mahasiswa</option>
                     <option value="dosen" {{ old('user_type') == 'dosen' ? 'selected' : '' }}>Dosen</option>
                   </select>
@@ -175,20 +175,44 @@
                   @enderror
                 </div>
                 <div class="mb-6 form-control-validation" id="identity_field" style="display: none;">
-                  <label for="identity_number" class="form-label" id="identity_label">NIM (for Mahasiswa)</label>
+                  <label for="identity_number" class="form-label" id="identity_label">NIM (untuk Mahasiswa)</label>
                   <input
                     type="text"
                     class="form-control @error('identity_number') is-invalid @enderror"
                     id="identity_number"
                     name="identity_number"
-                    placeholder="Masukkan NIM"
+                    placeholder="Enter your NIM"
                     value="{{ old('identity_number') }}" />
                     @error('identity_number')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
+                <div class="mb-6 form-control-validation">
+                  <label for="vehicle_type" class="form-label">Jenis Kendaraan</label>
+                  <select class="form-control @error('vehicle_type') is-invalid @enderror" id="vehicle_type" name="vehicle_type">
+                    <option value="">Pilih Jenis Kendaraan</option>
+                    <option value="motorcycle" {{ old('vehicle_type') == 'motorcycle' ? 'selected' : '' }}>Motor</option>
+                    <option value="car" {{ old('vehicle_type') == 'car' ? 'selected' : '' }}>Mobil</option>
+                  </select>
+                  @error('vehicle_type')
+                      <div class="invalid-feedback">{{ $message }}</div>
+                  @enderror
+                </div>
+                <div class="mb-6 form-control-validation">
+                  <label for="vehicle_plate_number" class="form-label">Nomor Plat Kendaraan</label>
+                  <input
+                    type="text"
+                    class="form-control @error('vehicle_plate_number') is-invalid @enderror"
+                    id="vehicle_plate_number"
+                    name="vehicle_plate_number"
+                    placeholder="Masukkan nomor plat kendaraan Anda"
+                    value="{{ old('vehicle_plate_number') }}" />
+                    @error('vehicle_plate_number')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
                 <div class="mb-6 form-password-toggle form-control-validation">
-                  <label class="form-label" for="password">Password</label>
+                  <label class="form-label" for="password">Kata Sandi</label>
                   <div class="input-group input-group-merge">
                     <input
                       type="password"
@@ -204,7 +228,7 @@
                   </div>
                 </div>
                 <div class="mb-6 form-password-toggle form-control-validation">
-                  <label class="form-label" for="password_confirmation">Konfirmasi Password</label>
+                  <label class="form-label" for="password_confirmation">Confirm Password</label>
                   <div class="input-group input-group-merge">
                     <input
                       type="password"
@@ -220,7 +244,7 @@
                   <div class="form-check mb-0 ms-2">
                     <input class="form-check-input" type="checkbox" id="terms-conditions" name="terms" />
                     <label class="form-check-label" for="terms-conditions">
-                      Saya setuju pada
+                      I agree to
                       <a href="javascript:void(0);">privacy policy & terms</a>
                     </label>
                   </div>
@@ -229,14 +253,14 @@
               </form>
 
               <p class="text-center">
-                <span>Sudah memiliki akun?</span>
+                <span>Already have an account?</span>
                 <a href="{{ route('login') }}">
-                  <span>Sign in disini!</span>
+                  <span>Sign in instead</span>
                 </a>
               </p>
 
               <div class="divider my-6">
-                <div class="divider-text">or</div>
+                <div class="divider-text">atau</div>
               </div>
 
               <div class="d-flex justify-content-center">
@@ -291,12 +315,12 @@
         if (userType === 'mahasiswa') {
           identityField.style.display = 'block';
           identityLabel.textContent = 'NIM (for Mahasiswa)';
-          identityInput.placeholder = 'Masukkan NIM';
+          identityInput.placeholder = 'Enter your NIM';
           identityInput.name = 'identity_number';
         } else if (userType === 'dosen') {
           identityField.style.display = 'block';
           identityLabel.textContent = 'NIP/NUP (for Dosen)';
-          identityInput.placeholder = 'Masukkan NIP/NUP';
+          identityInput.placeholder = 'Enter your NIP/NUP';
           identityInput.name = 'identity_number';
         } else {
           identityField.style.display = 'none';

@@ -35,7 +35,7 @@ class UserSeeder extends Seeder
                 'password'        => bcrypt('password'),
                 'identity_number' => 'NIP123456',
                 'user_type'       => 'pegawai',
-                'vehicle_type'    => null,
+                'vehicle_type'    => null,  
                 'vehicle_plate_number' => null,
             ],
             [

@@ -86,16 +86,18 @@ class QRCodeService
      */
     private function generateUniqueCodeForGeneral(Carbon $date): string
     {
-        // Buat kode unik untuk QR code umum
-        $prefix = 'GENERAL_' . $date->format('Y-m-d');
-        $random = Str::random(16);
+        // Buat kode unik untuk QR code umum dengan format: GENERAL-tanggal-random
+        $prefix = 'GENERAL';
+        $formattedDate = $date->format('dmy');
+        $random = Str::random(8);
 
-        // Gabungkan dan hash untuk membuat kode dengan panjang konsisten
-        return hash('sha256', $prefix . '_' . $random);
+        // Gabungkan menjadi format: GENERAL-tanggal-random
+        return $prefix . '-' . $formattedDate . '-' . $random;
     }
 
     /**
-     * Generate kode unik untuk pengguna dan tanggal
+     * Generate kode unik untuk pengguna dan tanggal sesuai format: id-plat-tanggal
+     * Contoh: 1-N 1234 AB-061225
      *
      * @param User $user
      * @param Carbon $date
@@ -103,12 +105,20 @@ class QRCodeService
      */
     private function generateUniqueCode(User $user, Carbon $date): string
     {
-        // Buat kode unik berdasarkan ID pengguna, tanggal, dan string acak
-        $prefix = $user->id . '_' . $date->format('Y-m-d');
-        $random = Str::random(16);
+        // Ambil ID pengguna
+        $userId = $user->id;
 
-        // Gabungkan dan hash untuk membuat kode dengan panjang konsisten
-        return hash('sha256', $prefix . '_' . $random);
+        // Ambil nomor plat kendaraan pengguna, jika tidak ada gunakan placeholder
+        $vehiclePlate = $user->vehicle_plate_number ?? 'NO_PLATE';
+
+        // Bersihkan nomor plat dari karakter spesial untuk membuatnya lebih aman dalam URL dan QR code
+        $cleanPlate = preg_replace('/[^A-Za-z0-9\s]/', '_', $vehiclePlate);
+
+        // Format tanggal menjadi DDMMYY
+        $formattedDate = $date->format('dmy');
+
+        // Gabungkan menjadi format: id-plat-tanggal
+        return $userId . '-' . $cleanPlate . '-' . $formattedDate;
     }
 
     /**
