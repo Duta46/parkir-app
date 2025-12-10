@@ -178,8 +178,8 @@
                 </li>
               </ul>
             </li>
-            @elseif(auth()->user()->hasRole('Pengguna') || in_array(auth()->user()->user_type, ['Dosen', 'Mahasiswa']))
-            <!-- Parking Menu for Dosen and Mahasiswa -->
+            @elseif(auth()->user()->hasRole('Pengguna') || in_array(auth()->user()->user_type, ['Dosen', 'Mahasiswa', 'pegawai']))
+            <!-- Parking Menu for Dosen, Mahasiswa, and Pegawai -->
             <li class="menu-item">
               <a href="{{ route('parking.history') }}" class="menu-link">
                 <i class="menu-icon icon-base ti tabler-car"></i>

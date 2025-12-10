@@ -169,13 +169,14 @@
                     <option value="">Select User Type</option>
                     <option value="mahasiswa" {{ old('user_type') == 'mahasiswa' ? 'selected' : '' }}>Mahasiswa</option>
                     <option value="dosen" {{ old('user_type') == 'dosen' ? 'selected' : '' }}>Dosen</option>
+                    <option value="pegawai" {{ old('user_type') == 'pegawai' ? 'selected' : '' }}>Pegawai</option>
                   </select>
                   @error('user_type')
                       <div class="invalid-feedback">{{ $message }}</div>
                   @enderror
                 </div>
                 <div class="mb-6 form-control-validation" id="identity_field" style="display: none;">
-                  <label for="identity_number" class="form-label" id="identity_label">NIM (untuk Mahasiswa)</label>
+                  <label for="identity_number" class="form-label" id="identity_label">NIM/NIP/NUP (untuk Mahasiswa/Dosen/Pegawai)</label>
                   <input
                     type="text"
                     class="form-control @error('identity_number') is-invalid @enderror"
@@ -190,9 +191,7 @@
                 <div class="mb-6 form-control-validation">
                   <label for="vehicle_type" class="form-label">Jenis Kendaraan</label>
                   <select class="form-control @error('vehicle_type') is-invalid @enderror" id="vehicle_type" name="vehicle_type">
-                    <option value="">Pilih Jenis Kendaraan</option>
-                    <option value="motorcycle" {{ old('vehicle_type') == 'motorcycle' ? 'selected' : '' }}>Motor</option>
-                    <option value="car" {{ old('vehicle_type') == 'car' ? 'selected' : '' }}>Mobil</option>
+                    <option value="motor" {{ old('vehicle_type') == 'motor' ? 'selected' : '' }}>Motor</option>
                   </select>
                   @error('vehicle_type')
                       <div class="invalid-feedback">{{ $message }}</div>
@@ -317,9 +316,9 @@
           identityLabel.textContent = 'NIM (for Mahasiswa)';
           identityInput.placeholder = 'Enter your NIM';
           identityInput.name = 'identity_number';
-        } else if (userType === 'dosen') {
+        } else if (userType === 'dosen' || userType === 'pegawai') {
           identityField.style.display = 'block';
-          identityLabel.textContent = 'NIP/NUP (for Dosen)';
+          identityLabel.textContent = 'NIP/NUP (for Dosen/Pegawai)';
           identityInput.placeholder = 'Enter your NIP/NUP';
           identityInput.name = 'identity_number';
         } else {

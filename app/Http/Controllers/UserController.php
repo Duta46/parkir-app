@@ -44,7 +44,7 @@ class UserController extends Controller
             'user_type' => 'required|in:mahasiswa,dosen,pegawai,admin',
             'role' => 'required|in:Pengguna,Admin',
             'identity_number' => 'nullable|string|max:255',
-            'vehicle_type' => 'nullable|string|max:50',
+            'vehicle_type' => 'nullable|string|in:motor,car',
             'vehicle_plate_number' => 'nullable|string|max:20',
         ]);
 
@@ -100,7 +100,7 @@ class UserController extends Controller
             'role' => 'required|in:Pengguna,Admin',
             'identity_number' => 'nullable|string|max:255',
             'password' => 'nullable|string|min:8|confirmed',
-            'vehicle_type' => 'nullable|string|max:50',
+            'vehicle_type' => 'nullable|string|in:motor,car',
             'vehicle_plate_number' => 'nullable|string|max:20',
         ]);
 

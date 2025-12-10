@@ -27,15 +27,15 @@ class CustomRegisterController extends Controller
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'username' => ['required', 'string', 'max:255', 'unique:users,username'],
-            'user_type' => ['required', 'in:mahasiswa,dosen'],
+            'user_type' => ['required', 'in:mahasiswa,dosen,pegawai'],
             'identity_number' => ['required', 'string', 'max:255', function ($attribute, $value, $fail) use ($request) {
                 if ($request->user_type === 'mahasiswa' && strlen($value) < 6) {
                     $fail('NIM must be at least 6 characters.');
-                } elseif ($request->user_type === 'dosen' && strlen($value) < 6) {
+                } elseif (($request->user_type === 'dosen' || $request->user_type === 'pegawai') && strlen($value) < 6) {
                     $fail('NIP/NUP must be at least 6 characters.');
                 }
             }, 'unique:users,identity_number'],
-            'vehicle_type' => ['required', 'string', 'max:50'],
+            'vehicle_type' => ['required', 'string', 'in:motor'],
             'vehicle_plate_number' => ['required', 'string', 'max:20'],
             'password' => ['required', 'confirmed', Password::defaults()],
             'terms' => ['accepted'],

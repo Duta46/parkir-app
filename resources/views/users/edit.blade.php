@@ -105,9 +105,7 @@
                                 <div class="mb-3">
                                     <label for="vehicle_type" class="form-label">Jenis Kendaraan</label>
                                     <select class="form-control @error('vehicle_type') is-invalid @enderror" id="vehicle_type" name="vehicle_type">
-                                        <option value="">Pilih Jenis Kendaraan</option>
-                                        <option value="motorcycle" {{ old('vehicle_type', $user->vehicle_type) == 'motorcycle' ? 'selected' : '' }}>Motorcycle</option>
-                                        <option value="car" {{ old('vehicle_type', $user->vehicle_type) == 'car' ? 'selected' : '' }}>Car</option>
+                                        <option value="motor" {{ old('vehicle_type', $user->vehicle_type) == 'motor' ? 'selected' : '' }}>Motor</option>
                                     </select>
                                     @error('vehicle_type')
                                         <div class="invalid-feedback">{{ $message }}</div>

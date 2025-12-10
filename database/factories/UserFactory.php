@@ -45,6 +45,8 @@ class UserFactory extends Factory
             'username' => $identityData['username'],
             'identity_number' => $identityData['identity_number'],
             'user_type' => $userType,
+            'vehicle_type' => $this->faker->randomElement(['motor', 'car']),
+            'vehicle_plate_number' => $this->faker->bothify('??-####-??'),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
@@ -72,6 +74,8 @@ class UserFactory extends Factory
                 'username' => 'admin',
                 'identity_number' => null,
                 'user_type' => 'admin',
+                'vehicle_type' => 'motor',
+                'vehicle_plate_number' => $this->faker->bothify('??-####-??'),
             ];
         });
     }
@@ -84,6 +88,8 @@ class UserFactory extends Factory
         return $this->state(function (array $attributes) {
             return [
                 'user_type' => 'pegawai',
+                'vehicle_type' => 'motor',
+                'vehicle_plate_number' => $this->faker->bothify('??-####-??'),
             ];
         });
     }
@@ -97,6 +103,8 @@ class UserFactory extends Factory
             return [
                 'user_type' => 'dosen',
                 'identity_number' => $this->faker->numerify('NIP####'),
+                'vehicle_type' => 'motor',
+                'vehicle_plate_number' => $this->faker->bothify('??-####-??'),
             ];
         });
     }
@@ -110,6 +118,8 @@ class UserFactory extends Factory
             return [
                 'user_type' => 'mahasiswa',
                 'identity_number' => $this->faker->numerify('NIM########'),
+                'vehicle_type' => 'motor',
+                'vehicle_plate_number' => $this->faker->bothify('??-####-??'),
             ];
         });
     }

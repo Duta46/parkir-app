@@ -123,8 +123,8 @@ class ParkingController extends Controller
             // Periksa apakah QR code adalah untuk pengguna tertentu atau umum
             $user = Auth::user();
 
-            // Jika QR code memiliki pemilik (bukan umum) dan bukan milik admin/petugas, maka hanya admin/petugas yang bisa discan
-            if ($qrCodeModel->user_id && !$user->hasRole(['Admin', 'Petugas'])) {
+            // Jika QR code memiliki pemilik (bukan umum) dan bukan milik admin/petugas, maka hanya admin/petugas atau user dengan user_type pegawai yang bisa discan
+            if ($qrCodeModel->user_id && !$user->hasRole(['Admin', 'Petugas']) && $user->user_type !== 'pegawai') {
                 // Ambil user pemilik QR code untuk mengecek apakah dia admin/petugas
                 $qrCodeOwner = \App\Models\User::find($qrCodeModel->user_id);
 
@@ -273,8 +273,8 @@ class ParkingController extends Controller
                 ], 400);
             }
 
-            // Jika QR code memiliki pemilik (bukan umum) dan bukan milik admin/petugas, maka hanya admin/petugas yang bisa discan
-            if ($qrCodeModel->user_id && !$user->hasRole(['Admin', 'Petugas'])) {
+            // Jika QR code memiliki pemilik (bukan umum) dan bukan milik admin/petugas, maka hanya admin/petugas atau user dengan user_type pegawai yang bisa discan
+            if ($qrCodeModel->user_id && !$user->hasRole(['Admin', 'Petugas']) && $user->user_type !== 'pegawai') {
                 // Ambil user pemilik QR code untuk mengecek apakah dia admin/petugas
                 $qrCodeOwner = \App\Models\User::find($qrCodeModel->user_id);
 
@@ -392,9 +392,9 @@ class ParkingController extends Controller
                 'qr_code' => 'nullable|string',
             ]);
 
-            // Validasi: hanya admin/petugas yang bisa memproses keluar parkir
+            // Validasi: hanya admin/petugas atau user dengan user_type pegawai yang bisa memproses keluar parkir
             $user = Auth::user();
-            if (!$user->hasRole(['Admin', 'Petugas'])) {
+            if (!$user->hasRole(['Admin', 'Petugas']) && $user->user_type !== 'pegawai') {
                 return response()->json([
                     'success' => false,
                     'message' => 'Hanya admin atau petugas yang dapat memproses keluar parkir'
@@ -421,8 +421,8 @@ class ParkingController extends Controller
 
                     // Validasi tambahan: hanya admin/petugas yang bisa memindai QR code milik pengguna
                     if ($qrCode->user_id) {
-                        // Ini adalah QR code milik pengguna tertentu, hanya admin/petugas yang bisa memindai
-                        if (!$user->hasRole(['Admin', 'Petugas'])) {
+                        // Ini adalah QR code milik pengguna tertentu, hanya admin/petugas atau user dengan user_type pegawai yang bisa memindai
+                        if (!$user->hasRole(['Admin', 'Petugas']) && $user->user_type !== 'pegawai') {
                             return response()->json([
                                 'success' => false,
                                 'message' => 'Hanya admin atau petugas yang dapat memindai QR code milik pengguna untuk proses keluar parkir'
