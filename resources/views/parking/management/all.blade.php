@@ -50,7 +50,7 @@
                                 @if($entry->parkingExit)
                                     Rp{{ number_format($entry->parkingExit->parking_fee, 0, ',', '.') }}
                                 @else
-                                    -
+                                    Rp1.000
                                 @endif
                             </td>
                             <td>
@@ -122,11 +122,11 @@
                                                     </div>
                                                     <div class="mb-3">
                                                         <label class="form-label">Biaya Parkir</label>
-                                                        <input type="text" class="form-control" value="Rp2.000" readonly>
-                                                        <input type="hidden" name="parking_fee" value="2000">
+                                                        <input type="text" class="form-control" value="Akan dihitung otomatis berdasarkan kebijakan" readonly>
+                                                        <!-- Biaya akan dihitung otomatis di controller berdasarkan kebijakan 1x bayar per hari -->
                                                     </div>
                                                     <div class="alert alert-info">
-                                                        <i class="ti ti-info-circle"></i> Biaya parkir tetap Rp 2.000 untuk semua kendaraan
+                                                        <i class="ti ti-info-circle"></i> Biaya akan dihitung otomatis berdasarkan kebijakan (Rp 1.000 pertama, gratis jika sudah bayar hari ini)
                                                     </div>
                                                 </div>
                                                 <div class="modal-footer">

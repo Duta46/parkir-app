@@ -252,6 +252,40 @@ class ParkingController extends Controller
     }
 
     /**
+     * Menampilkan halaman scan barcode khusus untuk admin/petugas
+     */
+    public function showAdminScanPage()
+    {
+        try {
+            $user = Auth::user();
+
+            // Hanya untuk admin dan petugas
+            if (!$user->hasRole(['Admin', 'Petugas'])) {
+                abort(403, 'Anda tidak memiliki akses ke halaman ini.');
+            }
+
+            // Ambil QR code milik admin/petugas jika sudah ada
+            $currentQRCode = $this->qrCodeService->getValidQRCodeForUser($user);
+
+            if (!$currentQRCode) {
+                $currentQRCode = $this->qrCodeService->generateDailyQRCode($user);
+            }
+
+            $qrCodeImage = $this->qrCodeService->generateQRCodeImage($currentQRCode->code);
+
+            return view('parking.admin-scan-barcode', compact('currentQRCode', 'qrCodeImage'));
+        } catch (\Exception $e) {
+            \Log::error('Error in showAdminScanPage: ' . $e->getMessage(), [
+                'user_id' => Auth::id(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return redirect()->route('dashboard')->with('error', 'Terjadi kesalahan saat memuat halaman scan admin.');
+        }
+    }
+
+    /**
      * Proses scan barcode untuk masuk parkir
      */
     public function scanBarcode(Request $request)
@@ -439,21 +473,48 @@ class ParkingController extends Controller
                 ], 400);
             }
 
-            // Set biaya parkir tetap Rp 2000
-            $parkingFee = 2000;
+            // Ambil user untuk menentukan biaya parkir
+            $user = $parkingEntry->user;
+            $baseParkingFee = 1000; // Ganti biaya dari 2000 ke 1000 sesuai permintaan
 
-            // Cek apakah pembayaran sudah dilakukan
             $transactionService = app(\App\Services\ParkingTransactionService::class);
 
-            // Jika belum ada pembayaran, cek apakah pembayaran langsung disediakan
+            // Hitung biaya parkir berdasarkan kebijakan: 1x bayar per hari untuk user non-admin/petugas
+            // (mahasiswa, dosen, dan pegawai - tapi bukan admin/petugas)
+            $parkingFee = $transactionService->calculateConditionalFee($user->id, $baseParkingFee);
+
+            // Cek apakah pembayaran sudah dilakukan
             if (!$transactionService->isPaid($parkingEntry->id)) {
                 // Jika parameter payment disediakan, proses pembayaran langsung
                 if ($request->filled('payment_amount')) {
-                    $paymentResult = $transactionService->processCashPayment(
-                        $parkingEntry->id,
-                        $request->payment_amount,
-                        $parkingFee
-                    );
+                    $paymentAmount = $request->payment_amount;
+
+                    // Jika biaya parkir adalah 0, kita tetap perlu menangani pembayaran
+                    if ($parkingFee == 0) {
+                        // Jika tidak perlu bayar, buat transaksi dengan jumlah 0
+                        $paymentResult = $transactionService->createPaymentTransaction(
+                            $parkingEntry->id,
+                            0,
+                            'cash',
+                            [
+                                'paid_amount' => $paymentAmount,
+                                'change' => $paymentAmount // Kembalikan semua sebagai kembalian
+                            ]
+                        );
+
+                        $paymentResult = [
+                            'success' => true,
+                            'message' => 'Pembayaran berhasil (gratis berdasarkan kebijakan harian)',
+                            'transaction' => $paymentResult
+                        ];
+                    } else {
+                        // Proses pembayaran normal
+                        $paymentResult = $transactionService->processCashPayment(
+                            $parkingEntry->id,
+                            $paymentAmount,
+                            $parkingFee
+                        );
+                    }
 
                     if (!$paymentResult['success']) {
                         return response()->json([
@@ -464,13 +525,28 @@ class ParkingController extends Controller
                         ], 400);
                     }
                 } else {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Pembayaran parkir diperlukan sebelum keluar. Silakan lakukan pembayaran terlebih dahulu.',
-                        'kode_parkir' => $parkingEntry->kode_parkir,
-                        'required_payment' => $parkingFee,
-                        'estimated_fee' => $parkingFee
-                    ], 400);
+                    // Jika biaya parkir adalah 0, pengguna tidak perlu membayar
+                    if ($parkingFee == 0) {
+                        // Buat transaksi gratis secara otomatis
+                        $transactionService->createPaymentTransaction(
+                            $parkingEntry->id,
+                            0,
+                            'cash',
+                            [
+                                'paid_amount' => 0,
+                                'change' => 0,
+                                'note' => 'Gratis karena sudah membayar hari ini'
+                            ]
+                        );
+                    } else {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Pembayaran parkir diperlukan sebelum keluar. Silakan lakukan pembayaran terlebih dahulu.',
+                            'kode_parkir' => $parkingEntry->kode_parkir,
+                            'required_payment' => $parkingFee,
+                            'estimated_fee' => $parkingFee
+                        ], 400);
+                    }
                 }
             }
 
@@ -488,7 +564,9 @@ class ParkingController extends Controller
                 'message' => 'Catatan keluar berhasil direkam',
                 'exit' => $parkingExit,
                 'parking_fee' => $parkingFee,
-                'user_name' => $parkingEntry->user->name
+                'user_name' => $parkingEntry->user->name,
+                'user_type' => $user->user_type,
+                'has_paid_today' => $transactionService->hasPaidToday($user->id),
             ]);
         } catch (\Exception $e) {
             \Log::error('Error in scanExit: ' . $e->getMessage(), [
@@ -500,6 +578,181 @@ class ParkingController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan saat memproses barcode keluar. Silakan coba lagi nanti.'
+            ], 500);
+        }
+    }
+
+    /**
+     * Proses scan barcode oleh admin/petugas untuk memindai QR code milik pengguna
+     * Fungsi ini menangani baik masuk (entry) dan keluar (exit)
+     * Jika kode yang dipindai adalah kode parkir (bukan QR code pengguna), maka proses sebagai exit
+     * Jika kode yang dipindai adalah QR code pengguna, maka proses sebagai entry
+     */
+    public function adminScanBarcode(Request $request)
+    {
+        try {
+            $request->validate([
+                'qr_code' => 'required|string',
+            ]);
+
+            $user = Auth::user();
+
+            // Coba validasi sebagai QR code terlebih dahulu
+            $qrCodeModel = $this->qrCodeService->validateQRCodeForEntry($request->qr_code);
+
+            if ($qrCodeModel) {
+                // Ini adalah QR code valid, cek apakah milik pengguna atau umum
+                if ($qrCodeModel->user_id) {
+                    // Ini adalah QR code milik pengguna, proses sebagai entry
+                    $qrCodeOwner = \App\Models\User::find($qrCodeModel->user_id);
+                    if (!$qrCodeOwner) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Pemilik QR code tidak ditemukan'
+                        ], 400);
+                    }
+
+                    // Cek apakah sudah ada entri aktif untuk pengguna ini
+                    $activeEntry = \App\Models\ParkingEntry::where('user_id', $qrCodeModel->user_id)
+                        ->whereDoesntHave('parkingExit')
+                        ->first();
+
+                    if ($activeEntry) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Pengguna sudah memiliki catatan masuk aktif'
+                        ], 400);
+                    }
+
+                    // Buat entri baru untuk pemilik QR code
+                    $parkingEntry = \App\Models\ParkingEntry::create([
+                        'user_id' => $qrCodeModel->user_id,
+                        'qr_code_id' => $qrCodeModel->id,
+                        'entry_time' => Carbon::now(),
+                        'entry_location' => $request->entry_location ?? null,
+                        'vehicle_type' => $qrCodeOwner->vehicle_type,
+                        'vehicle_plate_number' => $qrCodeOwner->vehicle_plate_number,
+                    ]);
+
+                    // Generate kode parkir
+                    $kodeParkir = app(\App\Services\ParkingTransactionService::class)->generateKodeParkirFromEntry($parkingEntry);
+
+                    // Perbarui kode parkir
+                    $parkingEntry->update([
+                        'kode_parkir' => $kodeParkir
+                    ]);
+
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Catatan masuk berhasil direkam',
+                        'entry' => $parkingEntry,
+                        'user_name' => $qrCodeOwner->name,
+                        'kode_parkir' => $kodeParkir,
+                    ]);
+                } else {
+                    // Ini adalah QR code umum, proses sebagai entry untuk pengguna saat ini (admin/petugas)
+                    $activeEntry = \App\Models\ParkingEntry::where('user_id', $user->id)
+                        ->whereDoesntHave('parkingExit')
+                        ->first();
+
+                    if ($activeEntry) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Anda masih memiliki catatan masuk aktif'
+                        ], 400);
+                    }
+
+                    $parkingEntry = \App\Models\ParkingEntry::create([
+                        'user_id' => $user->id,
+                        'qr_code_id' => $qrCodeModel->id,
+                        'entry_time' => Carbon::now(),
+                        'entry_location' => $request->entry_location ?? null,
+                        'vehicle_type' => $user->vehicle_type,
+                        'vehicle_plate_number' => $user->vehicle_plate_number,
+                    ]);
+
+                    $kodeParkir = app(\App\Services\ParkingTransactionService::class)->generateKodeParkirFromEntry($parkingEntry);
+
+                    $parkingEntry->update([
+                        'kode_parkir' => $kodeParkir
+                    ]);
+
+                    // Tandai QR code umum sebagai digunakan
+                    $this->qrCodeService->markQRCodeAsUsed($qrCodeModel);
+
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Catatan masuk berhasil direkam',
+                        'entry' => $parkingEntry,
+                        'user_name' => $user->name,
+                        'kode_parkir' => $kodeParkir,
+                    ]);
+                }
+            } else {
+                // Bukan QR code valid, mungkin kode parkir - proses sebagai exit
+                $parkingEntry = \App\Models\ParkingEntry::where('kode_parkir', $request->qr_code)
+                    ->whereDoesntHave('parkingExit')
+                    ->first();
+
+                if ($parkingEntry) {
+                    // Jika ditemukan entri dengan kode parkir ini, proses sebagai exit
+                    $transactionService = app(\App\Services\ParkingTransactionService::class);
+
+                    // Ambil user terkait untuk menentukan biaya parkir
+                    $userTarget = $parkingEntry->user;
+                    $baseParkingFee = 1000; // Biaya dasar Rp 1000
+                    $calculatedParkingFee = $transactionService->calculateConditionalFee($userTarget->id, $baseParkingFee);
+
+                    // Jika belum dibayar, proses pembayaran
+                    if (!$transactionService->isPaid($parkingEntry->id)) {
+                        // Buat transaksi pembayaran secara otomatis
+                        $transactionService->createPaymentTransaction(
+                            $parkingEntry->id,
+                            $calculatedParkingFee,
+                            'cash',
+                            [
+                                'paid_amount' => $calculatedParkingFee,
+                                'change' => 0,
+                                'note' => 'Diproses oleh admin/petugas'
+                            ]
+                        );
+                    }
+
+                    // Buat catatan keluar
+                    $parkingExit = \App\Models\ParkingExit::create([
+                        'user_id' => $parkingEntry->user_id,
+                        'parking_entry_id' => $parkingEntry->id,
+                        'exit_time' => Carbon::now(),
+                        'exit_location' => $request->exit_location ?? null,
+                        'parking_fee' => $calculatedParkingFee,
+                    ]);
+
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Catatan keluar berhasil direkam',
+                        'exit' => $parkingExit,
+                        'kode_parkir' => $parkingEntry->kode_parkir,
+                        'user_name' => $parkingEntry->user->name,
+                        'parking_fee' => $calculatedParkingFee,
+                    ]);
+                } else {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'QR code atau kode parkir tidak valid'
+                    ], 400);
+                }
+            }
+
+        } catch (\Exception $e) {
+            \Log::error('Error in adminScanBarcode: ' . $e->getMessage(), [
+                'user_id' => Auth::id(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat memproses barcode oleh admin/petugas'
             ], 500);
         }
     }

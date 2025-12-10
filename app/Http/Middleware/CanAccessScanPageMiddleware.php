@@ -22,8 +22,9 @@ class CanAccessScanPageMiddleware
 
         $user = Auth::user();
 
-        // Cek apakah user memiliki role 'Pengguna' atau user_type 'dosen', 'mahasiswa', atau 'pegawai'
-        if ($user->hasRole('Pengguna') || in_array($user->user_type, ['dosen', 'mahasiswa', 'pegawai'])) {
+        // Cek apakah user memiliki role 'Admin', 'Petugas', 'Pengguna', atau user_type 'dosen', 'mahasiswa', atau 'pegawai'
+        // Ini memperbolehkan Admin dan Petugas untuk mengakses scan page juga untuk beberapa keperluan
+        if ($user->hasRole(['Admin', 'Petugas', 'Pengguna']) || in_array($user->user_type, ['dosen', 'mahasiswa', 'pegawai'])) {
             return $next($request);
         }
 

@@ -176,6 +176,11 @@
                     <div data-i18n="Semua Data">Semua Data</div>
                   </a>
                 </li>
+                <li class="menu-item">
+                  <a href="{{ route('admin.scan.barcode.page') }}" class="menu-link">
+                    <div data-i18n="ScanBarcode">Pindai Barcode</div>
+                  </a>
+                </li>
               </ul>
             </li>
             @elseif(auth()->user()->hasRole('Pengguna') || in_array(auth()->user()->user_type, ['Dosen', 'Mahasiswa', 'pegawai']))
@@ -188,6 +193,20 @@
             </li>
             <li class="menu-item">
               <a href="{{ route('scan.barcode.page') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-scan"></i>
+                <div data-i18n="ScanBarcode">Pindai Barcode</div>
+              </a>
+            </li>
+            @elseif(auth()->user()->hasRole('Petugas'))
+            <!-- Parking Menu for Petugas -->
+            <li class="menu-item">
+              <a href="{{ route('parking.history') }}" class="menu-link">
+                <i class="menu-icon icon-base ti tabler-car"></i>
+                <div data-i18n="Parkir">Parkir</div>
+              </a>
+            </li>
+            <li class="menu-item">
+              <a href="{{ route('admin.scan.barcode.page') }}" class="menu-link">
                 <i class="menu-icon icon-base ti tabler-scan"></i>
                 <div data-i18n="ScanBarcode">Pindai Barcode</div>
               </a>

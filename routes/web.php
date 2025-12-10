@@ -29,6 +29,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/scan-barcode', [ParkingController::class, 'showScanPage'])->middleware('canAccessScanPage')->name('scan.barcode.page');
     Route::post('/scan-barcode', [ParkingController::class, 'scanBarcode'])->middleware('canAccessScanPage')->name('scan.barcode');
 
+    // Admin/Petugas scan barcode route
+    Route::middleware('role:Admin|Petugas')->group(function() {
+        Route::get('/admin-scan-barcode', [ParkingController::class, 'showAdminScanPage'])->name('admin.scan.barcode.page');
+        Route::post('/admin-scan-barcode', [ParkingController::class, 'adminScanBarcode'])->name('admin.scan.barcode');
+    });
+
     // Parking management routes for admin
     // Parking menu for users - view their complete parking data
     Route::get('/parking-history', [ParkingController::class, 'userParkingHistory'])->middleware(['auth', 'canAccessScanPage'])->name('parking.history');

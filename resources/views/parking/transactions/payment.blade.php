@@ -54,28 +54,28 @@
                         </div>
                         
                         <div class="mb-4">
-                            <h6 class="text-muted text-uppercase">Estimasi Biaya</h6>
+                            <h6 class="text-muted text-uppercase">Biaya Parkir</h6>
                             <table class="table table-borderless">
                                 <tr>
-                                    <td width="30%">Durasi Terhitung</td>
+                                    <td width="30%">Biaya Dasar</td>
                                     <td width="2%">:</td>
-                                    <td>
-                                        @php
-                                            $entryTime = $parkingEntry->entry_time;
-                                            $currentTime = now();
-                                            $hours = $entryTime->diffInHours($currentTime, false);
-                                            $hours = max(1, ceil($hours));
-                                            
-                                            // Assuming Rp 5.000 per hour
-                                            $estimatedFee = $hours * 5000;
-                                        @endphp
-                                        {{ $hours }} jam
-                                    </td>
+                                    <td>Rp1.000 (tetap)</td>
                                 </tr>
                                 <tr>
-                                    <td>Biaya Estimasi</td>
+                                    <td>Biaya Hari Ini</td>
                                     <td>:</td>
-                                    <td>Rp{{ number_format($estimatedFee, 0, ',', '.') }} (@php echo $hours; @endphp jam × Rp5.000/jam)</td>
+                                    <td>
+                                        @php
+                                            $transactionService = app(\App\Services\ParkingTransactionService::class);
+                                            $hasPaidToday = $transactionService->hasPaidToday($parkingEntry->user->id);
+                                            $calculatedFee = $transactionService->calculateConditionalFee($parkingEntry->user->id, 1000);
+                                        @endphp
+                                        @if($hasPaidToday)
+                                            Gratis (sudah bayar hari ini)
+                                        @else
+                                            Rp{{ number_format($calculatedFee, 0, ',', '.') }} (akan dikenakan biaya)
+                                        @endif
+                                    </td>
                                 </tr>
                             </table>
                         </div>

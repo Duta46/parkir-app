@@ -132,7 +132,7 @@
                                 @if($entry->parkingExit)
                                     Rp{{ number_format($entry->parkingExit->parking_fee, 0, ',', '.') }}
                                 @else
-                                    -
+                                    Rp1.000
                                 @endif
                             </td>
                             <td>

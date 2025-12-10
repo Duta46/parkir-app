@@ -328,16 +328,37 @@ class ParkingManagementController extends Controller
         $validated = $request->validate([
             'exit_time' => 'required|date',
             'exit_location' => 'nullable|string|max:255',
-            'parking_fee' => 'required|numeric|min:0',
         ]);
+
+        // Ambil user terkait untuk menentukan biaya parkir
+        $user = $parkingEntry->user;
+
+        // Gunakan transaksi service untuk menghitung biaya berdasarkan kebijakan: 1x bayar per hari untuk user non-admin/petugas
+        $transactionService = app(ParkingTransactionService::class);
+        $baseParkingFee = 1000; // Biaya dasar Rp 1000
+        $calculatedParkingFee = $transactionService->calculateConditionalFee($user->id, $baseParkingFee);
 
         $parkingExit = ParkingExit::create([
             'user_id' => $parkingEntry->user_id,
             'parking_entry_id' => $parkingEntry->id,
             'exit_time' => $validated['exit_time'],
             'exit_location' => $validated['exit_location'],
-            'parking_fee' => $validated['parking_fee'],
+            'parking_fee' => $calculatedParkingFee,
         ]);
+
+        // Jika biaya parkir adalah 0 (karena kebijakan 1x bayar per hari), buat transaksi pembayaran gratis
+        if ($calculatedParkingFee == 0) {
+            $transactionService->createPaymentTransaction(
+                $parkingEntry->id,
+                0,
+                'cash',
+                [
+                    'paid_amount' => 0,
+                    'change' => 0,
+                    'note' => 'Gratis karena sudah membayar hari ini'
+                ]
+            );
+        }
 
         return redirect()->route('parking.management.show', $parkingEntry->id)->with('success', 'Catatan keluar berhasil ditambahkan.');
     }
@@ -349,7 +370,7 @@ class ParkingManagementController extends Controller
     {
         $this->authorizeAdmin();
 
-        $parkingEntry = ParkingEntry::findOrFail($id);
+        $parkingEntry = ParkingEntry::with(['user:id,name,username'])->findOrFail($id);
 
         // Cek apakah sudah keluar
         if ($parkingEntry->parkingExit) {
@@ -360,8 +381,15 @@ class ParkingManagementController extends Controller
         $validated = $request->validate([
             'exit_time' => 'required|date',
             'exit_location' => 'nullable|string|max:255',
-            'parking_fee' => 'required|numeric|min:0',
         ]);
+
+        // Ambil user terkait untuk menentukan biaya parkir
+        $user = $parkingEntry->user;
+
+        // Gunakan transaksi service untuk menghitung biaya berdasarkan kebijakan: 1x bayar per hari untuk user non-admin/petugas
+        $transactionService = app(ParkingTransactionService::class);
+        $baseParkingFee = 1000; // Biaya dasar Rp 1000
+        $calculatedParkingFee = $transactionService->calculateConditionalFee($user->id, $baseParkingFee);
 
         // Buat catatan keluar parkir
         $parkingExit = ParkingExit::create([
@@ -369,8 +397,22 @@ class ParkingManagementController extends Controller
             'parking_entry_id' => $parkingEntry->id,
             'exit_time' => $validated['exit_time'],
             'exit_location' => $validated['exit_location'] ?? null,
-            'parking_fee' => $validated['parking_fee'],
+            'parking_fee' => $calculatedParkingFee,
         ]);
+
+        // Jika biaya parkir adalah 0 (karena kebijakan 1x bayar per hari), buat transaksi pembayaran gratis
+        if ($calculatedParkingFee == 0) {
+            $transactionService->createPaymentTransaction(
+                $parkingEntry->id,
+                0,
+                'cash',
+                [
+                    'paid_amount' => 0,
+                    'change' => 0,
+                    'note' => 'Gratis karena sudah membayar hari ini'
+                ]
+            );
+        }
 
         return redirect()->route('parking.management.all')->with('success', 'Proses keluar berhasil dilakukan.');
     }

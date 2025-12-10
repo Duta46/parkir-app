@@ -249,7 +249,7 @@
                                 @if($entry->parkingExit)
                                     Rp{{ number_format($entry->parkingExit->parking_fee, 0, ',', '.') }}
                                 @else
-                                    -
+                                    Rp1.000
                                 @endif
                             </td>
                             <td>
@@ -275,7 +275,7 @@
                                         <form method="POST" action="{{ route('parking.management.addExit', $entry->id) }}" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menambahkan catatan keluar untuk entri ini?')">
                                             @csrf
                                             <input type="hidden" name="exit_time" value="{{ now()->format('Y-m-d H:i:s') }}">
-                                            <input type="hidden" name="parking_fee" value="5000">
+                                            <!-- Biaya akan dihitung otomatis berdasarkan kebijakan 1x bayar per hari -->
                                             <button type="submit" class="dropdown-item">
                                                 <i class="ti ti-logout me-1"></i> Keluar
                                             </button>

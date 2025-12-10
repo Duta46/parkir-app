@@ -67,7 +67,7 @@ class ParkingTransactionService
 
         return $kode;
     }
-    
+
     /**
      * Hitung biaya parkir berdasarkan durasi
      *
@@ -79,17 +79,17 @@ class ParkingTransactionService
     public function calculateParkingFee(Carbon $entryTime, Carbon $exitTime, int $ratePerHour = 5000): float
     {
         $hours = $entryTime->diffInHours($exitTime, false);
-        
+
         // Jika lebih dari 0 jam, pastikan minimal 1 jam
         if ($hours > 0) {
             $hours = max(1, ceil($hours)); // Pembulatan ke atas
         } else {
             $hours = 1; // Minimal 1 jam
         }
-        
+
         return $hours * $ratePerHour;
     }
-    
+
     /**
      * Buat transaksi pembayaran parkir
      *
@@ -103,7 +103,7 @@ class ParkingTransactionService
     {
         $parkingEntry = ParkingEntry::findOrFail($parkingEntryId);
         $transactionCode = $this->generateTransactionCode();
-        
+
         $transaction = ParkingTransaction::create([
             'user_id' => $parkingEntry->user_id,
             'parking_entry_id' => $parkingEntryId,
@@ -114,10 +114,10 @@ class ParkingTransactionService
             'paid_at' => Carbon::now(),
             'payment_details' => $paymentDetails,
         ]);
-        
+
         return $transaction;
     }
-    
+
     /**
      * Proses pembayaran parkir (untuk cash)
      *
@@ -129,7 +129,7 @@ class ParkingTransactionService
     public function processCashPayment(int $parkingEntryId, float $paidAmount, float $expectedAmount): array
     {
         $parkingEntry = ParkingEntry::findOrFail($parkingEntryId);
-        
+
         // Cek apakah sudah ada transaksi sebelumnya
         if ($parkingEntry->parkingTransaction) {
             return [
@@ -138,7 +138,7 @@ class ParkingTransactionService
                 'transaction' => $parkingEntry->parkingTransaction
             ];
         }
-        
+
         // Validasi jumlah pembayaran
         if ($paidAmount < $expectedAmount) {
             return [
@@ -148,7 +148,7 @@ class ParkingTransactionService
                 'paid_amount' => $paidAmount
             ];
         }
-        
+
         // Buat transaksi pembayaran
         $transaction = $this->createPaymentTransaction(
             $parkingEntryId,
@@ -159,7 +159,7 @@ class ParkingTransactionService
                 'change' => $paidAmount - $expectedAmount
             ]
         );
-        
+
         return [
             'success' => true,
             'message' => 'Pembayaran berhasil',
@@ -180,5 +180,78 @@ class ParkingTransactionService
 
         return $transaction && $transaction->status === 'completed';
     }
-    
+
+    /**
+     * Cek apakah user sudah membayar biaya parkir hari ini
+     * Digunakan untuk menerapkan kebijakan 1x bayar per hari untuk user non-admin/petugas
+     *
+     * @param int $userId
+     * @return bool
+     */
+    public function hasPaidToday(int $userId): bool
+    {
+        $user = User::find($userId);
+
+        // Terapkan kebijakan 1x bayar per hari untuk:
+        // - user_type 'mahasiswa' dan 'dosen'
+        // - user_type 'pegawai' yang bukan memiliki role 'Petugas'
+        // Jangan terapkan kebijakan untuk:
+        // - user_type 'admin'
+        // - user dengan role 'Admin' atau 'Petugas'
+        if (!$user || $user->hasRole(['Admin', 'Petugas']) || $user->user_type === 'admin') {
+            return false;
+        }
+
+        // Khusus untuk user_type 'pegawai', hanya terapkan kebijakan jika mereka bukan Petugas
+        if ($user->user_type === 'pegawai' && $user->hasRole(['Petugas'])) {
+            return false;
+        }
+
+        // Cek apakah user sudah memiliki transaksi pembayaran untuk hari ini
+        $today = Carbon::today();
+        $hasPaidToday = ParkingTransaction::whereHas('parkingEntry', function($query) use ($userId, $today) {
+                $query->where('user_id', $userId)
+                      ->whereDate('entry_time', $today);
+            })
+            ->where('status', 'completed')
+            ->exists();
+
+        return $hasPaidToday;
+    }
+
+    /**
+     * Hitung biaya parkir dengan kebijakan 1x bayar per hari untuk user non-admin/petugas
+     *
+     * @param int $userId
+     * @param float $baseFee Biaya dasar parkir
+     * @return float
+     */
+    public function calculateConditionalFee(int $userId, float $baseFee): float
+    {
+        $user = User::find($userId);
+
+        // Terapkan kebijakan 1x bayar per hari untuk:
+        // - user_type 'mahasiswa' dan 'dosen'
+        // - user_type 'pegawai' yang bukan memiliki role 'Petugas'
+        // Jangan terapkan kebijakan untuk:
+        // - user_type 'admin'
+        // - user dengan role 'Admin' atau 'Petugas'
+        if (!$user || $user->hasRole(['Admin', 'Petugas']) || $user->user_type === 'admin') {
+            return $baseFee; // Kebijakan normal untuk admin/petugas
+        }
+
+        // Khusus untuk user_type 'pegawai', hanya terapkan kebijakan jika mereka bukan Petugas
+        if ($user->user_type === 'pegawai' && $user->hasRole(['Petugas'])) {
+            return $baseFee;
+        }
+
+        // Jika user sudah membayar hari ini, biaya menjadi 0
+        if ($this->hasPaidToday($userId)) {
+            return 0;
+        }
+
+        // Jika belum membayar hari ini, kenakan biaya normal
+        return $baseFee;
+    }
+
 }

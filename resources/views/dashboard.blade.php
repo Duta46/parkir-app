@@ -220,7 +220,13 @@
                                 <span class="badge bg-success">Masuk</span>
                             </td>
                             <td>{{ $entry->entry_time->format('d/m/Y H:i:s') }}<br><small class="text-muted">{{ $entry->kode_parkir }}</small></td>
-                            <td>N/A</td>
+                            <td>
+                                @if($entry->parkingExit)
+                                    Rp{{ number_format($entry->parkingExit->parking_fee, 0, ',', '.') }}
+                                @else
+                                    Rp1.000
+                                @endif
+                            </td>
                             <td>
                                 @if($entry->parkingExit)
                                     <span class="badge bg-primary">Sudah Keluar</span>
