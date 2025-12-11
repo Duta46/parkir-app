@@ -17,7 +17,7 @@
                         <div class="flex-shrink-0 me-3">
                             <div class="avatar">
                                 <span class="avatar-initial rounded bg-label-info">
-                                    <i class="ti ti-users ti-lg"></i>
+                                    <i class="fa-solid fa-users fa-xl"></i>
                                 </span>
                             </div>
                         </div>
@@ -36,7 +36,7 @@
                         <div class="flex-shrink-0 me-3">
                             <div class="avatar">
                                 <span class="avatar-initial rounded bg-label-success">
-                                    <i class="ti ti-car ti-lg"></i>
+                                    <i class="fa-solid fa-car fa-xl"></i>
                                 </span>
                             </div>
                         </div>
@@ -55,7 +55,7 @@
                         <div class="flex-shrink-0 me-3">
                             <div class="avatar">
                                 <span class="avatar-initial rounded bg-label-primary">
-                                    <i class="ti ti-login ti-lg"></i>
+                                    <i class="fa-solid fa-right-to-bracket fa-xl"></i>
                                 </span>
                             </div>
                         </div>
@@ -74,7 +74,7 @@
                         <div class="flex-shrink-0 me-3">
                             <div class="avatar">
                                 <span class="avatar-initial rounded bg-label-warning">
-                                    <i class="ti ti-logout ti-lg"></i>
+                                    <i class="fa-solid fa-right-from-bracket fa-xl"></i>
                                 </span>
                             </div>
                         </div>
@@ -93,7 +93,7 @@
                         <div class="flex-shrink-0 me-3">
                             <div class="avatar">
                                 <span class="avatar-initial rounded bg-label-danger">
-                                    <i class="ti ti-currency-riyal ti-lg"></i>
+                                    <i class="fa-solid fa-money-bill-wave fa-xl"></i>
                                 </span>
                             </div>
                         </div>
@@ -196,7 +196,7 @@
                 <div class="col-md-2">
                     <label class="form-label">&nbsp;</label>
                     <button type="submit" class="btn btn-primary w-100">
-                        <i class="ti ti-search"></i> Cari
+                        <i class="fa-solid fa-search"></i> Cari
                     </button>
                 </div>
             </form>
@@ -209,7 +209,7 @@
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="card-title mb-0">Data Parkir Terbaru</h5>
             <a href="{{ route('parking.management.all') }}" class="btn btn-primary">
-                <i class="ti ti-list-check"></i> Lihat Semua
+                <i class="fa-solid fa-list-check"></i> Lihat Semua
             </a>
         </div>
         <div class="card-body">

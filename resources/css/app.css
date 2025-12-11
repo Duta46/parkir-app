@@ -1,3 +1,6 @@
+/* Impor semua gaya ikon Font Awesome */
+@import "@fortawesome/fontawesome-free/css/all.min.css"; 
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

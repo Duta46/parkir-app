@@ -8,7 +8,7 @@
 
     <!-- Informasi Pengguna -->
     <div class="row mb-4">
-        <div class="col-md-4 mb-4">
+        <div class="col-lg-4 col-md-4 mb-4">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">Profil Saya</h5>
@@ -34,14 +34,14 @@
         @if(Auth::user()->hasRole('Admin'))
         <div class="col-md-8">
             <div class="row">
-                <div class="col-lg-3 col-md-6 mb-4">
+                <div class="col-lg-5 col-md-6 mb-4">
                     <div class="card">
                         <div class="card-body">
                             <div class="d-flex align-items-center">
                                 <div class="flex-shrink-0 me-3">
                                     <div class="avatar">
                                         <span class="avatar-initial rounded bg-label-info">
-                                            <i class="ti ti-users ti-lg"></i>
+                                            <i class="fa-solid fa-users fa-xl"></i>
                                         </span>
                                     </div>
                                 </div>
@@ -54,14 +54,14 @@
                     </div>
                 </div>
 
-                <div class="col-lg-3 col-md-6 mb-4">
+                <div class="col-lg-5 col-md-6 mb-4">
                     <div class="card">
                         <div class="card-body">
                             <div class="d-flex align-items-center">
                                 <div class="flex-shrink-0 me-3">
                                     <div class="avatar">
                                         <span class="avatar-initial rounded bg-label-success">
-                                            <i class="ti ti-car ti-lg"></i>
+                                            <i class="fa-solid fa-car fa-xl"></i>
                                         </span>
                                     </div>
                                 </div>
@@ -74,14 +74,14 @@
                     </div>
                 </div>
 
-                <div class="col-lg-3 col-md-6 mb-4">
+                <div class="col-lg-5 col-md-6 mb-4">
                     <div class="card">
                         <div class="card-body">
                             <div class="d-flex align-items-center">
                                 <div class="flex-shrink-0 me-3">
                                     <div class="avatar">
                                         <span class="avatar-initial rounded bg-label-warning">
-                                            <i class="ti ti-exit ti-lg"></i>
+                                            <i class="fa-solid fa-right-from-bracket fa-xl"></i>
                                         </span>
                                     </div>
                                 </div>
@@ -94,14 +94,14 @@
                     </div>
                 </div>
 
-                <div class="col-lg-3 col-md-6 mb-4">
+                <div class="col-lg-5 col-md-6 mb-4">
                     <div class="card">
                         <div class="card-body">
                             <div class="d-flex align-items-center">
                                 <div class="flex-shrink-0 me-3">
                                     <div class="avatar">
                                         <span class="avatar-initial rounded bg-label-danger">
-                                            <i class="ti ti-currency-riyal ti-lg"></i>
+                                            <i class="fa-solid fa-money-bill-wave fa-xl"></i>
                                         </span>
                                     </div>
                                 </div>
@@ -127,7 +127,7 @@
                     <h5 class="card-title mb-0">QR Code Saya</h5>
                 </div>
                 <div class="card-body text-center">
-                    <div class="mb-4">
+                    <div class="mb-4 d-flex justify-content-center">
                         @if($qrCodeModel ?? null)
                             @if($qrCodeModel->expires_at->isToday())
                                 @if(strpos($qrCodeImage, '<svg') !== false)
@@ -178,7 +178,7 @@
 
                         @if($qrCodeModel ?? null && $qrCodeModel->expires_at->isToday())
                             <button type="button" class="btn btn-outline-success" onclick="downloadQRCode()">
-                                <i class="ti ti-download"></i> Download QR Code
+                                <i class="fa-solid fa-download"></i> Download QR Code
                             </button>
                         @endif
                     </div>
