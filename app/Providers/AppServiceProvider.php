@@ -22,13 +22,13 @@ class AppServiceProvider extends ServiceProvider
     {
         // require base_path('routes/console.php');
 
-        //Force HTTPS in production or when using ngrok
-        if(config('app.env') === 'production' || str_contains(request()->getHost(), 'ngrok-free.app')) {
-            URL::forceScheme('https');
+        // Force HTTPS in production or when using ngrok
+        // if(config('app.env') === 'production' || str_contains(request()->getHost(), 'ngrok-free.app')) {
+        //     URL::forceScheme('https');
 
-            // Also set secure headers for ngrok
-            $this->app['request']->server->set('HTTPS', 'on');
-            $this->app['request']->server->set('HTTP_X_FORWARDED_PROTO', 'https');
-        }
+        //     // Also set secure headers for ngrok
+        //     $this->app['request']->server->set('HTTPS', 'on');
+        //     $this->app['request']->server->set('HTTP_X_FORWARDED_PROTO', 'https');
+        // }
     }
 }

@@ -33,6 +33,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:Admin|Petugas')->group(function() {
         Route::get('/admin-scan-barcode', [ParkingController::class, 'showAdminScanPage'])->name('admin.scan.barcode.page');
         Route::post('/admin-scan-barcode', [ParkingController::class, 'adminScanBarcode'])->name('admin.scan.barcode');
+        Route::put('/admin-scan-barcode-update-exit', [ParkingController::class, 'adminUpdateExit'])->name('admin.update.exit');
     });
 
     // Parking management routes for admin

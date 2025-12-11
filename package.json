@@ -21,6 +21,7 @@
     },
     "dependencies": {
         "@fortawesome/fontawesome-free": "^7.1.0",
-        "@tabler/icons": "^3.35.0"
+        "@tabler/icons": "^3.35.0",
+        "font-awesome": "^4.7.0"
     }
 }

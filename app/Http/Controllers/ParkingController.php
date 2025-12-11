@@ -583,6 +583,84 @@ class ParkingController extends Controller
     }
 
     /**
+     * Update waktu keluar parkir menggunakan PUT method
+     * Fungsi ini untuk memperbarui data waktu keluar dan status pengguna
+     */
+    public function adminUpdateExit(Request $request)
+    {
+        try {
+            $request->validate([
+                'qr_code' => 'required|string',
+            ]);
+
+            $user = Auth::user();
+
+            // Cari entri parkir berdasarkan kode parkir
+            $parkingEntry = \App\Models\ParkingEntry::where('kode_parkir', $request->qr_code)
+                ->whereDoesntHave('parkingExit')
+                ->first();
+
+            if (!$parkingEntry) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Kode parkir tidak valid atau pengguna sudah keluar'
+                ], 400);
+            }
+
+            $transactionService = app(\App\Services\ParkingTransactionService::class);
+
+            // Ambil user terkait untuk menentukan biaya parkir
+            $userTarget = $parkingEntry->user;
+            $baseParkingFee = 1000; // Biaya dasar Rp 1000
+            $calculatedParkingFee = $transactionService->calculateConditionalFee($userTarget->id, $baseParkingFee);
+
+            // Jika belum dibayar, proses pembayaran
+            if (!$transactionService->isPaid($parkingEntry->id)) {
+                // Buat transaksi pembayaran secara otomatis
+                $transactionService->createPaymentTransaction(
+                    $parkingEntry->id,
+                    $calculatedParkingFee,
+                    'cash',
+                    [
+                        'paid_amount' => $calculatedParkingFee,
+                        'change' => 0,
+                        'note' => 'Diproses oleh admin/petugas'
+                    ]
+                );
+            }
+
+            // Buat catatan keluar
+            $parkingExit = \App\Models\ParkingExit::create([
+                'user_id' => $parkingEntry->user_id,
+                'parking_entry_id' => $parkingEntry->id,
+                'exit_time' => Carbon::now(),
+                'exit_location' => $request->exit_location ?? null,
+                'parking_fee' => $calculatedParkingFee,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Catatan keluar berhasil direkam',
+                'exit' => $parkingExit,
+                'kode_parkir' => $parkingEntry->kode_parkir,
+                'user_name' => $parkingEntry->user->name,
+                'parking_fee' => $calculatedParkingFee,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error in adminUpdateExit: ' . $e->getMessage(), [
+                'user_id' => Auth::id(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat memperbarui data keluar oleh admin/petugas'
+            ], 500);
+        }
+    }
+
+    /**
      * Proses scan barcode oleh admin/petugas untuk memindai QR code milik pengguna
      * Fungsi ini menangani baik masuk (entry) dan keluar (exit)
      * Jika kode yang dipindai adalah kode parkir (bukan QR code pengguna), maka proses sebagai exit

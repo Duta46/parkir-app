@@ -41,12 +41,58 @@ class CustomLoginController extends Controller
             ]);
         }
 
+        // Validasi bahwa user login dengan cara yang sesuai dengan tipe mereka
+        if (!$this->isValidLoginMethod($user, $loginField)) {
+            throw ValidationException::withMessages([
+                'login' => ['Silakan login menggunakan ' . $this->getRequiredLoginField($user) . '.'],
+            ]);
+        }
+
         // Kita tidak menggunakan verifikasi email lagi, jadi abaikan pengecekan ini
 
         // Login user
         Auth::login($user, $request->filled('remember'));
 
         return redirect()->intended(route('dashboard'));
+    }
+
+    /**
+     * Validasi apakah user login dengan cara yang sesuai
+     */
+    private function isValidLoginMethod($user, $loginField)
+    {
+        // Untuk tipe mahasiswa, dosen, dan pegawai, hanya boleh login dengan identity_number atau nim_nip_nup
+        if (in_array($user->user_type, ['mahasiswa', 'dosen', 'pegawai'])) {
+            // Harus login dengan identity_number atau nim_nip_nup
+            return ($user->identity_number === $loginField || $user->nim_nip_nup === $loginField);
+        }
+
+        // Untuk tipe admin, bisa login dengan username
+        if ($user->user_type === 'admin') {
+            return $user->username === $loginField;
+        }
+
+        // Default: izinkan jika ditemukan
+        return true;
+    }
+
+    /**
+     * Dapatkan label field login yang seharusnya digunakan
+     */
+    private function getRequiredLoginField($user)
+    {
+        switch ($user->user_type) {
+            case 'mahasiswa':
+                return 'NIM (Nomor Induk Mahasiswa)';
+            case 'dosen':
+                return 'NIP/NUP (Nomor Induk Pegawai/Pegawai Universitas)';
+            case 'pegawai':
+                return 'NIP/NUP (Nomor Induk Pegawai/Pegawai Universitas)';
+            case 'admin':
+                return 'username';
+            default:
+                return 'identifier yang benar';
+        }
     }
 
     /**
@@ -66,7 +112,7 @@ class CustomLoginController extends Controller
             return $user;
         }
 
-        // Cari berdasarkan username (untuk admin/petugas)
+        // Cari berdasarkan username (akan divalidasi nanti apakah diperbolehkan untuk tipe user ini)
         $user = User::where('username', $loginField)->first();
         if ($user) {
             return $user;

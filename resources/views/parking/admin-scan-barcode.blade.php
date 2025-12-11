@@ -62,7 +62,7 @@
                         <label for="manualCode" class="form-label">Masukkan Kode atau Barcode</label>
                         <input type="text" class="form-control" id="manualCode" placeholder="Masukkan kode parkir atau barcode">
                     </div>
-                    
+
                     <div class="mb-3">
                         <label class="form-label">Tipe Proses</label>
                         <div class="d-flex gap-3">
@@ -80,7 +80,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <button type="button" class="btn btn-primary w-100" onclick="processManualCode()">
                         <i class="ti ti-scan me-1"></i> Proses Kode
                     </button>
@@ -205,16 +205,28 @@
 
                 console.log("QR Code Ditemukan:", content);
 
-                // Cek apakah kode terkait dengan masuk atau keluar
-                const urls = document.getElementById('routeUrls');
-                const scanEntryUrl = urls ? urls.getAttribute('data-scan-barcode-url') : '{{ route("admin.scan.barcode") }}';
-                const scanExitUrl = urls ? urls.getAttribute('data-scan-exit-url') : '{{ route("parking.scan.exit") }}';
-                const csrfToken = urls ? urls.getAttribute('data-csrf-token') : document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                // Coba tentukan jenis barcode: jika mengandung simbol yang mirip kode parkir, gunakan PUT endpoint
+                // Kode parkir biasanya dalam format: id-plat-tanggal (contoh: 2-N_1234_AB-111225)
+                // QR code masuk biasanya dalam format: id-NO_PLATE-tanggal (contoh: 2-NO_PLATE-111225)
 
-                // Untuk admin/petugas, secara default kita proses sebagai keluar
-                // karena mereka biasanya memindai barcode milik pengguna untuk keluar
-                fetch(scanExitUrl, {
-                    method: 'POST',
+                const isLikelyParkirCode = content.includes('-') && content.split('-').length >= 3;
+
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+                let endpoint, method;
+                if (isLikelyParkirCode) {
+                    // Jika kode terlihat seperti kode parkir, gunakan PUT untuk update exit
+                    endpoint = '{{ route("admin.update.exit") }}'; // PUT route for update exit
+                    method = 'PUT';
+                } else {
+                    // Jika bukan seperti kode parkir, gunakan POST untuk scan umum
+                    endpoint = '{{ route("admin.scan.barcode") }}'; // POST route for general scan
+                    method = 'POST';
+                }
+
+                // Kirim ke endpoint yang sesuai
+                fetch(endpoint, {
+                    method: method,
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': csrfToken
@@ -230,29 +242,8 @@
                         showScanStatus(data.message, 'success');
                         showLastScanResult(data);
                     } else {
-                        // Jika gagal sebagai exit, coba sebagai entry
-                        return fetch(scanEntryUrl, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': csrfToken
-                            },
-                            body: JSON.stringify({
-                                qr_code: content
-                            })
-                        }).then(response => response.json());
-                    }
-                })
-                .then(data => {
-                    if (data) {
-                        hideLoading();
-                        if (data.success) {
-                            showScanStatus(data.message, 'success');
-                            showLastScanResult(data);
-                        } else {
-                            showScanStatus(data.message, 'error');
-                            showLastScanResult(data);
-                        }
+                        showScanStatus(data.message, 'error');
+                        showLastScanResult(data);
                     }
                 })
                 .catch(error => {
@@ -293,23 +284,26 @@
                 return;
             }
 
-            const urls = document.getElementById('routeUrls');
-            const scanEntryUrl = urls ? urls.getAttribute('data-scan-barcode-url') : '{{ route("admin.scan.barcode") }}';
-            const scanExitUrl = urls ? urls.getAttribute('data-scan-exit-url') : '{{ route("parking.scan.exit") }}';
-            const csrfToken = urls ? urls.getAttribute('data-csrf-token') : document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-            let apiUrl = processType === 'entry' ? scanEntryUrl : scanExitUrl;
+            // Tentukan endpoint berdasarkan tipe proses
+            let endpoint, method;
+            if (processType === 'exit') {
+                // Untuk keluar, gunakan PUT endpoint
+                endpoint = '{{ route("admin.update.exit") }}'; // PUT route for update exit
+                method = 'PUT';
+            } else {
+                // Untuk masuk, gunakan POST endpoint
+                endpoint = '{{ route("admin.scan.barcode") }}'; // POST route for general scan
+                method = 'POST';
+            }
+
             let requestData = {
                 qr_code: manualCode
             };
 
-            // Tambahkan data tambahan jika proses keluar
-            if (processType === 'exit') {
-                requestData.kode_parkir = manualCode; // Kode parkir mungkin dalam format berbeda
-            }
-
-            fetch(apiUrl, {
-                method: 'POST',
+            fetch(endpoint, {
+                method: method,
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': csrfToken
