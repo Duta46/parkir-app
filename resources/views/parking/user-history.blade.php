@@ -15,7 +15,7 @@
                         <div class="flex-shrink-0 me-3">
                             <div class="avatar">
                                 <span class="avatar-initial rounded bg-label-info">
-                                    <i class="ti ti-car ti-lg"></i>
+                                    <i class="fa-solid fa-car fa-xl"></i>
                                 </span>
                             </div>
                         </div>
@@ -35,7 +35,7 @@
                         <div class="flex-shrink-0 me-3">
                             <div class="avatar">
                                 <span class="avatar-initial rounded bg-label-warning">
-                                    <i class="ti ti-hourglass ti-lg"></i>
+                                    <i class="fa-solid fa-hourglass-half fa-xl"></i>
                                 </span>
                             </div>
                         </div>
@@ -55,7 +55,7 @@
                         <div class="flex-shrink-0 me-3">
                             <div class="avatar">
                                 <span class="avatar-initial rounded bg-label-success">
-                                    <i class="ti ti-exit ti-lg"></i>
+                                    <i class="fa-solid fa-right-from-bracket fa-xl"></i>
                                 </span>
                             </div>
                         </div>
@@ -75,7 +75,7 @@
                         <div class="flex-shrink-0 me-3">
                             <div class="avatar">
                                 <span class="avatar-initial rounded bg-label-danger">
-                                    <i class="ti ti-currency-riyal ti-lg"></i>
+                                    <i class="fa-solid fa-money-bill-wave fa-xl"></i>
                                 </span>
                             </div>
                         </div>
@@ -94,7 +94,7 @@
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="card-title mb-0">Riwayat Parkir Lengkap</h5>
             <a href="{{ route('scan.barcode.page') }}" class="btn btn-primary">
-                <i class="ti ti-scan"></i> Scan Barcode
+                <i class="fa-solid fa-qrcode"></i> Scan Barcode
             </a>
         </div>
         <div class="card-body">
