@@ -172,25 +172,36 @@ class QRCodeService
     public function generateQRCodeImage(string $code, int $size = 200): string
     {
         try {
-            // Coba generate dengan format PNG terlebih dahulu
+            // Generate QR code dengan parameter yang lebih ramah untuk scanning
             $qrCode = \SimpleSoftwareIO\QrCode\Facades\QrCode::size($size)
-                ->format('png')
-                ->generate($code);
-        } catch (\BaconQrCode\Exception\RuntimeException $e) {
-            // Jika gagal karena masalah Imagick, coba dengan SVG
-            $qrCode = \SimpleSoftwareIO\QrCode\Facades\QrCode::size($size)
-                ->format('svg')
+                ->margin(2)  // Tambahkan margin untuk kemudahan scanning
+                ->encoding('UTF-8')  // Pastikan encoding yang benar
                 ->generate($code);
         } catch (\Exception $e) {
-            // Jika semua pendekatan gagal, kembalikan string kosong atau kode QR dalam bentuk teks
+            // Jika ada error, log dan coba format lain
             \Log::error('Error generating QR code image: ' . $e->getMessage(), [
                 'code' => $code,
                 'size' => $size,
                 'error' => $e->getMessage()
             ]);
 
-            // Kembalikan kode sebagai fallback
-            return '';
+            try {
+                // Coba format SVG sebagai fallback
+                $qrCode = \SimpleSoftwareIO\QrCode\Facades\QrCode::size($size)
+                    ->format('svg')
+                    ->margin(2)
+                    ->encoding('UTF-8')
+                    ->generate($code);
+            } catch (\Exception $e2) {
+                // Jika semua pendekatan gagal, kembalikan string kosong
+                \Log::error('Error generating QR code image (fallback): ' . $e2->getMessage(), [
+                    'code' => $code,
+                    'size' => $size,
+                    'error' => $e2->getMessage()
+                ]);
+                
+                return '';
+            }
         }
 
         return $qrCode;

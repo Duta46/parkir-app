@@ -5,7 +5,7 @@
 @section('content')
 <div class="container-xxl flex-grow-1 container-p-y">
     <h4 class="fw-bold py-3 mb-4">
-        <span class="text-muted fw-light">Manajemen Parkir /</span> Detail
+        <span class="text-muted fw/light">Manajemen Parkir /</span> Detail
     </h4>
 
     <div class="row">
@@ -35,7 +35,7 @@
                                 <tr>
                                     <td>Email</td>
                                     <td>:</td>
-                                    <td>{{ $parkingEntry->user->email }}</td>
+                                    <td>{{ $parkingEntry->user->email ?: '-' }}</td>
                                 </tr>
                                 <tr>
                                     <td>Kode Parkir</td>
@@ -44,7 +44,7 @@
                                 </tr>
                             </table>
                         </div>
-                        
+
                         <div class="col-md-6 mb-3">
                             <h6 class="text-muted text-uppercase">Informasi Kendaraan</h6>
                             <table class="table table-borderless">
@@ -61,7 +61,7 @@
                             </table>
                         </div>
                     </div>
-                    
+
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <h6 class="text-muted text-uppercase">Waktu Masuk</h6>
@@ -83,7 +83,7 @@
                                 </tr>
                             </table>
                         </div>
-                        
+
                         <div class="col-md-6 mb-3">
                             <h6 class="text-muted text-uppercase">Waktu Keluar</h6>
                             @if($parkingEntry->parkingExit)
@@ -114,7 +114,7 @@
                             @endif
                         </div>
                     </div>
-                    
+
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <h6 class="text-muted text-uppercase">Informasi QR Code</h6>
@@ -138,24 +138,6 @@
                             </table>
                         </div>
 
-                        <div class="col-md-6 mb-3">
-                            <h6 class="text-muted text-uppercase">QR Code Pengguna</h6>
-                            <div class="text-center">
-                                @php
-                                    $qrCodeService = app(\App\Services\QRCodeService::class);
-                                    $qrCodeImage = $qrCodeService->generateQRCodeImage($parkingEntry->qrCode->code, 150);
-                                @endphp
-                                @if(strpos($qrCodeImage, '<svg') !== false)
-                                    {!! $qrCodeImage !!}
-                                @else
-                                    <img src="data:image/png;base64,{{ base64_encode($qrCodeImage) }}"
-                                         alt="QR Code Pengguna"
-                                         class="img-fluid border border-1 rounded"
-                                         style="max-width: 150px; height: auto;">
-                                @endif
-                            </div>
-                        </div>
-                        
                         @if($parkingEntry->parkingExit)
                         <div class="col-md-6 mb-3">
                             <h6 class="text-muted text-uppercase">Durasi Parkir</h6>
@@ -184,6 +166,42 @@
         </div>
 
         <div class="col-xxl-4 col-xl-5 col-lg-4">
+            <!-- Card untuk QR Code Pengguna -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">QR Code Pengguna</h5>
+                </div>
+                <div class="card-body text-center">
+                    <div class="mb-3" style="display: flex; justify-content: center; align-items: center; min-height: 220px; background: #f8f9fa; border-radius: 10px; padding: 15px;">
+                        @php
+                            $qrCodeService = app(\App\Services\QRCodeService::class);
+                            $qrCodeImage = $qrCodeService->generateQRCodeImage($parkingEntry->qrCode->code, 200);
+                        @endphp
+                        @if(strpos($qrCodeImage, '<svg') !== false)
+                            <div style="padding: 20px; background: white; border-radius: 10px; display: inline-block; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                                {!! $qrCodeImage !!}
+                            </div>
+                        @else
+                            <img src="data:image/png;base64,{{ base64_encode($qrCodeImage) }}"
+                                 alt="QR Code Pengguna"
+                                 class="img-fluid border border-1 rounded"
+                                 style="padding: 20px; background: white; border-radius: 10px; max-width: 180px; height: auto; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                        @endif
+                    </div>
+                    <p class="mb-1" style="font-size: 0.85rem;">
+                        <strong>{{ $parkingEntry->user->id }} - {{ $parkingEntry->vehicle_plate_number ?: 'NO_PLATE' }} - {{ $parkingEntry->qrCode->date->format('dmy') }}</strong>
+                    </p>
+                    <button type="button" class="btn btn-outline-primary mt-2" onclick="downloadQRCode()">
+                        <i class="ti ti-download"></i> Download QR Code
+                    </button>
+                    <div class="mt-2">
+                        <span class="text-muted" style="font-size: 0.8rem;">
+                            <i class="ti ti-info-circle"></i> QR Code ini bisa digunakan untuk keluar dari area parkir
+                        </span>
+                    </div>
+                </div>
+            </div>
+
             <div class="card mb-4">
                 <div class="card-header">
                     <h5 class="card-title mb-0">Aksi</h5>
@@ -216,7 +234,7 @@
                     </div>
                 </div>
             </div>
-            
+
             @if($parkingEntry->parkingTransaction)
             <div class="card">
                 <div class="card-header">
@@ -264,4 +282,83 @@
         </div>
     </div>
 </div>
+
+<script>
+function downloadQRCode() {
+    // Ambil container QR code
+    const qrCodeContainer = document.querySelector('.card-body.text-center');
+    const qrImg = qrCodeContainer.querySelector('img');
+    const qrSvg = qrCodeContainer.querySelector('svg');
+
+    if (qrSvg) {
+        // Handle SVG download
+        downloadSVGAsPNG(qrSvg, '{{ $parkingEntry->qrCode->code }}');
+    } else if (qrImg) {
+        // Handle image download
+        downloadImageAsPNG(qrImg, '{{ $parkingEntry->qrCode->code }}');
+    } else {
+        console.error('QR Code element not found');
+    }
+}
+
+function downloadSVGAsPNG(svgElement, code) {
+    const svgData = new XMLSerializer().serializeToString(svgElement);
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+
+    // Set canvas size with padding
+    const svgSize = svgElement.viewBox.baseVal || { width: 250, height: 250 };
+    const padding = 25;
+    canvas.width = svgSize.width + (padding * 2);
+    canvas.height = svgSize.height + (padding * 2);
+
+    // Fill with white background
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const img = new Image();
+    img.onload = function() {
+        ctx.drawImage(img, padding, padding);
+
+        const pngUrl = canvas.toDataURL('image/png');
+        const downloadLink = document.createElement('a');
+        downloadLink.href = pngUrl;
+        downloadLink.download = 'qr-code-' + code + '.png';
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+    };
+
+    // Create a blob URL for the SVG with padding
+    const blob = new Blob([svgData], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(blob);
+    img.src = url;
+}
+
+function downloadImageAsPNG(imgElement, code) {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+
+    // Add padding and white background
+    const originalWidth = imgElement.naturalWidth || imgElement.width;
+    const originalHeight = imgElement.naturalHeight || imgElement.height;
+    const padding = 25;
+    canvas.width = originalWidth + (padding * 2);
+    canvas.height = originalHeight + (padding * 2);
+
+    // Fill with white background
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.drawImage(imgElement, padding, padding);
+
+    const pngUrl = canvas.toDataURL('image/png');
+    const downloadLink = document.createElement('a');
+    downloadLink.href = pngUrl;
+    downloadLink.download = 'qr-code-' + code + '.png';
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+}
+</script>
 @endsection

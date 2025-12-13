@@ -34,6 +34,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/admin-scan-barcode', [ParkingController::class, 'showAdminScanPage'])->name('admin.scan.barcode.page');
         Route::post('/admin-scan-barcode', [ParkingController::class, 'adminScanBarcode'])->name('admin.scan.barcode');
         Route::put('/admin-scan-barcode-update-exit', [ParkingController::class, 'adminUpdateExit'])->name('admin.update.exit');
+        Route::post('/process-user-qrcode-as-exit', [ParkingController::class, 'processUserQrCodeAsExit'])->name('parking.process.user.qrcode.exit');
+        // Route baru untuk fungsi exit berdasarkan ID entri
+        Route::post('/process-user-qrcode-as-exit-by-id', [ParkingController::class, 'processUserQrCodeAsExitById'])->name('parking.process.user.qrcode.exit.by.id');
     });
 
     // Parking management routes for admin

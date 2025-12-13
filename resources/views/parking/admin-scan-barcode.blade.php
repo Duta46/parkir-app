@@ -5,7 +5,7 @@
 @section('content')
 <div class="container-xxl flex-grow-1 container-p-y">
     <h4 class="fw-bold py-3 mb-4">
-        <span class="text-muted fw-light">Parkir /</span> Scan Barcode (Admin/Petugas)
+        <span class="text-muted fw/light">Parkir /</span> Scan Barcode (Admin/Petugas)
     </h4>
 
     <!-- Card untuk scan barcode pengguna -->
@@ -13,107 +13,178 @@
         <div class="col-lg-8 mx-auto">
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">Scan Barcode Pengguna</h5>
+                    <h5 class="card-title mb-0">Scan Barcode</h5>
                 </div>
                 <div class="card-body">
                     <div class="alert alert-info">
                         <i class="ti ti-info-circle"></i>
-                        <strong>Petunjuk:</strong> Scan barcode milik pengguna untuk mencatat keluar masuk parkir. Fitur ini khusus untuk admin dan petugas.
+                        <strong>Petunjuk:</strong> 
+                        <div class="mt-1">
+                            <ul class="mb-0">
+                                <li>Scan QR code pengguna untuk <strong>keluar</strong> dari area parkir</li>
+                                <li>Jika pengguna sedang aktif, QR code mereka bisa digunakan untuk proses keluar</li>
+                            </ul>
+                        </div>
                     </div>
 
                     <div class="row">
                         <div class="col-md-8 offset-md-2">
                             <div class="text-center mb-4">
-                                <div id="cameraContainer">
-                                    <video id="preview" width="100%" height="300" style="border: 1px solid #ccc; max-width: 400px;" autoplay playsinline></video>
+                                <div id="qr-reader" style="width: 100%; max-width: 400px; margin: 0 auto; border: 1px solid #ccc; background-color: #000; position: relative; overflow: hidden;">
+                                    <div id="scan-indicator" style="position: absolute; top: 10px; left: 10px; background: rgba(0, 255, 0, 0.7); color: white; padding: 5px 10px; border-radius: 5px; font-size: 12px; z-index: 1000;">AUTO SCAN AKTIF</div>
+                                    <div id="scan-line" style="position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: #00ff00; animation: scan 2s infinite linear; z-index: 999;"></div>
                                 </div>
-
-                                <div id="cameraStatus" class="mt-2">
-                                    <p class="text-muted">
-                                        <i class="ti ti-camera"></i> Arahkan kamera ke barcode pengguna...
-                                    </p>
+                                <div id="qr-reader-buttons" class="mt-2">
+                                    <button id="startButton" class="btn btn-success">Mulai Scan</button>
+                                    <button id="stopButton" class="btn btn-warning" style="display: none;">Stop Scan</button>
                                 </div>
                             </div>
+
+                            <div id="cameraStatus" class="mt-2 text-center">
+                                <p class="text-muted">
+                                    <i class="ti ti-camera"></i> Kamera belum diaktifkan. Klik "Mulai Scan" untuk memulai...
+                                </p>
+                            </div>
                         </div>
+                    </div>
+
+                    <div class="text-center mb-3">
+                        <button id="debugCodeBtn" class="btn btn-outline-info me-2">
+                            Debug: Tampilkan Kode Scan
+                        </button>
+                        <button id="uploadImageBtn" class="btn btn-outline-primary">
+                            Atau Upload Gambar QR Code
+                        </button>
+                    </div>
+
+                    <!-- Upload zone -->
+                    <div id="uploadZone" class="mt-3 p-3 border rounded" style="display: none;">
+                        <div class="mb-3">
+                            <label for="qrImageUpload" class="form-label">Pilih Gambar QR Code:</label>
+                            <input type="file" class="form-control" id="qrImageUpload" accept="image/*">
+                        </div>
+                        <div id="uploadedImagePreview" class="text-center mb-3"></div>
+                        <button id="processImageBtn" class="btn btn-primary" disabled>Proses Gambar</button>
                     </div>
 
                     <div id="scanStatus" class="mt-3"></div>
 
                     <!-- Hidden elements to store URLs -->
                     <div id="routeUrls"
-                         data-scan-barcode-url="{{ route('admin.scan.barcode') }}"
-                         data-scan-exit-url="{{ route('parking.scan.exit') }}"
+                         data-process-user-qrcode-exit-url="{{ route('parking.process.user.qrcode.exit') }}"
                          data-csrf-token="{{ csrf_token() }}">
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Card untuk input manual (jika kamera tidak tersedia) -->
-    <div class="row mb-4">
-        <div class="col-lg-6 mx-auto">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">Input Manual</h5>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label for="manualCode" class="form-label">Masukkan Kode atau Barcode</label>
-                        <input type="text" class="form-control" id="manualCode" placeholder="Masukkan kode parkir atau barcode">
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Tipe Proses</label>
-                        <div class="d-flex gap-3">
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="processType" id="processTypeEntry" value="entry" checked>
-                                <label class="form-check-label" for="processTypeEntry">
-                                    Masuk
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="processType" id="processTypeExit" value="exit">
-                                <label class="form-check-label" for="processTypeExit">
-                                    Keluar
-                                </label>
-                            </div>
+                    
+                    <!-- Debug area -->
+                    <div id="debugInfo" class="mt-3" style="display: none;">
+                        <div class="alert alert-secondary">
+                            <strong>Debug Info:</strong><br>
+                            <span id="debugContent"></span>
                         </div>
                     </div>
-
-                    <button type="button" class="btn btn-primary w-100" onclick="processManualCode()">
-                        <i class="ti ti-scan me-1"></i> Proses Kode
-                    </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Card untuk status scan terakhir -->
-    <div class="row mb-4" id="lastScanCard" style="display: none;">
+    <!-- Card untuk tampilan barcode pengguna (akan muncul setelah scan admin untuk masuk) -->
+    <div class="row mb-4" id="userBarcodeCard" style="display: none;">
         <div class="col-lg-6 mx-auto">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">Hasil Scan Terakhir</h5>
+                    <h5 class="card-title mb-0">Barcode Keluar Anda</h5>
+                </div>
+                <div class="card-body text-center">
+                    <div class="mb-4">
+                        <div id="userBarcodeImage"></div>
+                    </div>
+
+                    <p class="mb-2">
+                        <small class="text-muted">Barcode ini berlaku untuk satu kali penggunaan</small>
+                    </p>
+                    <p id="userBarcodeText" class="fw-bold"></p>
+
+                    <div class="alert alert-success">
+                        <i class="ti ti-check-circle"></i>
+                        <strong>Status:</strong> Catatan keluar berhasil direkam untuk pengguna.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card untuk riwayat parkir -->
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Riwayat Parkir Terbaru</h5>
                 </div>
                 <div class="card-body">
-                    <div id="lastScanContent">
-                        <!-- Content akan diisi secara dinamis -->
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>ID Entri</th>
+                                    <th>Kode Parkir</th>
+                                    <th>Nama</th>
+                                    <th>Waktu Masuk</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @php
+                                    $entries = \App\Models\ParkingEntry::with(['user:id,name,username', 'parkingExit'])
+                                        ->orderBy('entry_time', 'desc')
+                                        ->limit(5)
+                                        ->get();
+                                @endphp
+
+                                @forelse($entries as $entry)
+                                <tr>
+                                    <td>{{ $entry->id }}</td>
+                                    <td>{{ $entry->kode_parkir }}</td>
+                                    <td>{{ $entry->user->name }}</td>
+                                    <td>{{ $entry->entry_time->format('d/m/Y H:i:s') }}</td>
+                                    <td>
+                                        @if($entry->parkingExit)
+                                            <span class="badge bg-success">Selesai</span>
+                                        @else
+                                            <span class="badge bg-warning">Aktif</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">Belum ada riwayat parkir</td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    @keyframes scan {
+        0% { top: 0; }
+        100% { top: 100%; }
+    }
+</style>
 @endsection
 
 @push('scripts')
-    <script src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
+    <!-- Load Html5Qrcode Library -->
+    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-            let scanner = new Instascan.Scanner({ video: document.getElementById('preview') });
-            let lastScanned = ""; // Menyimpan QR Code terakhir agar tidak diproses dua kali
-            let isProcessing = false; // Flag untuk mencegah pemrosesan ganda
+            let html5QrCode;
+            let lastScanned = "";
+            let isProcessing = false;
+            let isScanning = false;
 
             // Menampilkan loading saat scan QR Code
             function showLoading() {
@@ -161,189 +232,298 @@
                 }, 5000);
             }
 
-            // Fungsi untuk menampilkan hasil scan terakhir
-            function showLastScanResult(data) {
-                const lastScanCard = document.getElementById('lastScanCard');
-                const lastScanContent = document.getElementById('lastScanContent');
-
-                if (!lastScanContent || !lastScanCard) return;
-
-                let htmlContent = '';
-                if (data.success) {
-                    htmlContent = `
-                        <div class="alert alert-success">
-                            <i class="ti ti-check-circle"></i>
-                            <strong>Proses Berhasil!</strong><br>
-                            <strong>Nama:</strong> ${data.user_name || 'N/A'}<br>
-                            <strong>Kode Parkir:</strong> ${data.kode_parkir || data.exit?.parking_entry?.kode_parkir || 'N/A'}<br>
-                            <strong>Waktu:</strong> ${new Date().toLocaleString('id-ID')}<br>
-                            <strong>Status:</strong> ${data.message || 'Berhasil'}
-                        </div>
-                    `;
-                } else {
-                    htmlContent = `
-                        <div class="alert alert-danger">
-                            <i class="ti ti-alert-circle"></i>
-                            <strong>Proses Gagal!</strong><br>
-                            <strong>Error:</strong> ${data.message || 'Terjadi kesalahan'}
-                        </div>
-                    `;
+            // Fungsi untuk menampilkan informasi debug
+            function showDebugInfo(content) {
+                const debugInfo = document.getElementById('debugInfo');
+                const debugContent = document.getElementById('debugContent');
+                
+                if (debugContent) {
+                    debugContent.innerHTML = content;
                 }
-
-                lastScanContent.innerHTML = htmlContent;
-                lastScanCard.style.display = 'block';
+                
+                if (debugInfo) {
+                    debugInfo.style.display = 'block';
+                }
             }
 
-            // Event listener ketika QR Code berhasil dipindai
-            scanner.addListener('scan', function (content) {
-                if (isProcessing) return; // Mencegah pemrosesan ganda
-                if (content === lastScanned) return; // Cegah scan berulang dalam waktu singkat
+            // Fungsi untuk menangani hasil scan
+            function processScanResult(data, source = 'camera') {
+                if (data.success) {
+                    showScanStatus(data.message, 'success');
 
-                isProcessing = true;
-                lastScanned = content;
-                showLoading(); // Tampilkan loading
+                    // Tampilkan barcode pengguna
+                    const userBarcodeCard = document.getElementById('userBarcodeCard');
+                    const userBarcodeImage = document.getElementById('userBarcodeImage');
+                    const userBarcodeText = document.getElementById('userBarcodeText');
 
-                console.log("QR Code Ditemukan:", content);
-
-                // Coba tentukan jenis barcode: jika mengandung simbol yang mirip kode parkir, gunakan PUT endpoint
-                // Kode parkir biasanya dalam format: id-plat-tanggal (contoh: 2-N_1234_AB-111225)
-                // QR code masuk biasanya dalam format: id-NO_PLATE-tanggal (contoh: 2-NO_PLATE-111225)
-
-                const isLikelyParkirCode = content.includes('-') && content.split('-').length >= 3;
-
-                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-
-                let endpoint, method;
-                if (isLikelyParkirCode) {
-                    // Jika kode terlihat seperti kode parkir, gunakan PUT untuk update exit
-                    endpoint = '{{ route("admin.update.exit") }}'; // PUT route for update exit
-                    method = 'PUT';
+                    if(userBarcodeCard) {
+                        userBarcodeCard.style.display = 'block';
+                        if (data.user_name) {
+                            document.querySelector('#userBarcodeCard .alert strong').textContent = 
+                                'Catatan keluar berhasil direkam untuk ' + data.user_name + '.';
+                        }
+                    }
                 } else {
-                    // Jika bukan seperti kode parkir, gunakan POST untuk scan umum
-                    endpoint = '{{ route("admin.scan.barcode") }}'; // POST route for general scan
-                    method = 'POST';
+                    showScanStatus(data.message, 'error');
                 }
+            }
 
-                // Kirim ke endpoint yang sesuai
-                fetch(endpoint, {
-                    method: method,
+            // Fungsi untuk memproses kode QR sebagai exit
+            function processUserQrCodeAsExit(qrCodeContent, source = 'camera') {
+                const urls = document.getElementById('routeUrls');
+                const processExitUrl = urls ? urls.getAttribute('data-process-user-qrcode-exit-url') : '{{ route("parking.process.user.qrcode.exit") }}';
+                const csrfToken = urls ? urls.getAttribute('data-csrf-token') : document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                
+                return fetch(processExitUrl, {
+                    method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': csrfToken
                     },
                     body: JSON.stringify({
-                        qr_code: content
+                        qr_code: qrCodeContent
                     })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    hideLoading(); // Sembunyikan loading
-                    if (data.success) {
-                        showScanStatus(data.message, 'success');
-                        showLastScanResult(data);
-                    } else {
-                        showScanStatus(data.message, 'error');
-                        showLastScanResult(data);
-                    }
-                })
-                .catch(error => {
-                    hideLoading(); // Sembunyikan loading
-                    console.error('Error:', error);
-                    showScanStatus('Terjadi kesalahan saat menghubungi server', 'error');
-                    isProcessing = false; // Reset flag jika error
                 });
-            });
+            }
 
-            // Memulai kamera dan memilih kamera belakang jika ada
-            Instascan.Camera.getCameras().then(function (cameras) {
-                if (cameras.length > 0) {
-                    let backCamera = cameras.find(camera => camera.name.toLowerCase().includes('back'));
-                    scanner.start(backCamera || cameras[0]); // Pilih kamera belakang jika tersedia
-
-                    // Update status camera
-                    const status = document.getElementById('cameraStatus');
-                    if(status) {
-                        status.innerHTML = '<p class="text-success"><i class="ti ti-check-circle"></i> Kamera aktif. Arahkan ke barcode pengguna...</p>';
-                    }
+            // Fungsi untuk menangani kode QR yang sudah terbaca
+            function handleScannedCode(content, source = 'camera') {
+                if (source === 'upload') {
+                    isProcessingImage = true;
+                    showLoading();
                 } else {
-                    showScanStatus('Kamera tidak ditemukan. Silakan periksa perangkat Anda.', 'error');
+                    isProcessing = true;
+                    showLoading();
                 }
-            }).catch(function (e) {
-                console.error("Kesalahan saat mengakses kamera:", e);
-                showScanStatus('Gagal mengakses kamera. Pastikan browser memiliki izin.', 'error');
-            });
-        });
+                
+                showDebugInfo('Kode QR yang diproses: <strong>' + content + '</strong><br>' +
+                    'Tanggal saat ini: <strong>' + new Date().toLocaleDateString() + '</strong><br>' +
+                    'Sumber: <strong>' + (source === 'upload' ? 'Upload Gambar' : 'Kamera') + '</strong>');
 
-        // Fungsi untuk proses input manual
-        function processManualCode() {
-            const manualCode = document.getElementById('manualCode').value;
-            const processType = document.querySelector('input[name="processType"]:checked').value;
-
-            if (!manualCode) {
-                showScanStatus('Masukkan kode terlebih dahulu!', 'error');
-                return;
+                processUserQrCodeAsExit(content, source)
+                    .then(response => {
+                        if (!response.ok) {
+                            // Jika response tidak ok (status >= 400), baca text untuk error debugging
+                            return response.text().then(errorText => {
+                                console.error('Server response error:', errorText);
+                                hideLoading();
+                                if (source === 'upload') isProcessingImage = false;
+                                else isProcessing = false;
+                                showScanStatus('Terjadi kesalahan server: ' + response.status, 'error');
+                                throw new Error('HTTP error ' + response.status);
+                            });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (source === 'upload') {
+                            hideLoading();
+                            isProcessingImage = false;
+                        } else {
+                            hideLoading();
+                            isProcessing = false;
+                        }
+                        
+                        processScanResult(data, source);
+                        
+                        if (source !== 'upload') {
+                            // Reload halaman setelah 2 detik untuk memperbarui riwayat (hanya dari kamera)
+                            setTimeout(() => {
+                                location.reload();
+                            }, 2000);
+                        }
+                    })
+                    .catch(error => {
+                        if (source === 'upload') {
+                            hideLoading();
+                            isProcessingImage = false;
+                        } else {
+                            hideLoading();
+                            isProcessing = false;
+                        }
+                        
+                        console.error('Error pada proses keluar pengguna:', error);
+                        showScanStatus('Terjadi kesalahan saat menghubungi server: ' + error.message, 'error');
+                    });
             }
 
-            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            // Sukses callback - dipanggil ketika QR code terbaca
+            const onScanSuccess = function(decodedText, decodedResult) {
+                if (isProcessing) return; // Mencegah pemrosesan ganda
+                if (decodedText === lastScanned) return; // Cegah scan berulang dalam waktu singkat
 
-            // Tentukan endpoint berdasarkan tipe proses
-            let endpoint, method;
-            if (processType === 'exit') {
-                // Untuk keluar, gunakan PUT endpoint
-                endpoint = '{{ route("admin.update.exit") }}'; // PUT route for update exit
-                method = 'PUT';
-            } else {
-                // Untuk masuk, gunakan POST endpoint
-                endpoint = '{{ route("admin.scan.barcode") }}'; // POST route for general scan
-                method = 'POST';
-            }
-
-            let requestData = {
-                qr_code: manualCode
+                console.log("QR Code Ditemukan: ", decodedText);
+                
+                isProcessing = true;
+                lastScanned = decodedText;
+                
+                // Proses kode QR
+                handleScannedCode(decodedText, 'camera');
+                
+                // Reset isProcessing setelah delay untuk mencegah pemrosesan ganda
+                setTimeout(() => {
+                    isProcessing = false;
+                }, 2000); // Delay 2 detik sebelum bisa scan lagi
             };
 
-            fetch(endpoint, {
-                method: method,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken
-                },
-                body: JSON.stringify(requestData)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showScanStatus(data.message, 'success');
-                    showLastScanResult(data);
-                } else {
-                    showScanStatus(data.message, 'error');
-                    showLastScanResult(data);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showScanStatus('Terjadi kesalahan saat menghubungi server', 'error');
-            });
-        }
+            // Gagal callback - jika terjadi error
+            const onScanFailure = function(error) {
+                // Biarkan kosong untuk mencegah spam di console
+            };
 
-        // Fungsi tambahan untuk menampilkan status scan (digunakan juga di showScanStatus)
-        function showScanStatus(message, type) {
-            const statusDiv = document.getElementById('scanStatus');
-            if (!statusDiv) return;
+            // Fungsi untuk memulai scanning
+            function startScanning() {
+                if (isScanning) return;
+                
+                isScanning = true;
+                
+                const startButton = document.getElementById('startButton');
+                const stopButton = document.getElementById('stopButton');
+                const cameraStatus = document.getElementById('cameraStatus');
+                
+                if (startButton) startButton.style.display = 'none';
+                if (stopButton) stopButton.style.display = 'inline-block';
+                if (cameraStatus) cameraStatus.innerHTML = '<p class="text-info"><i class="ti ti-loader"></i> Menginisialisasi kamera...</p>';
 
-            var alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
-            var htmlContent = '<div class="' + alertClass + ' alert alert-dismissible fade show" role="alert">' +
-                message +
-                '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"><\/button>' +
-                '<\/div>';
-            statusDiv.innerHTML = htmlContent;
+                // Inisialisasi Html5Qrcode
+                html5QrCode = new Html5Qrcode("qr-reader");
 
-            // Auto-dismiss after 5 seconds
-            setTimeout(function() {
-                if (statusDiv.querySelector('.alert')) {
-                    statusDiv.innerHTML = '';
-                }
-            }, 5000);
-        }
+                Html5Qrcode.getCameras().then(cameras => {
+                    if (cameras && cameras.length) {
+                        // Gunakan kamera pertama
+                        const cameraId = cameras[0].id;
+                        
+                        html5QrCode.start(
+                            cameraId,
+                            {
+                                fps: 10,
+                                qrbox: { width: 250, height: 250 }
+                            },
+                            onScanSuccess,
+                            onScanFailure
+                        ).then(() => {
+                            if (cameraStatus) cameraStatus.innerHTML = '<p class="text-success"><i class="ti ti-check-circle"></i> Kamera aktif. AUTO SCAN berjalan, arahkan ke QR code...</p>';
+                        }).catch(err => {
+                            console.error("Gagal memulai kamera: ", err);
+                            if (cameraStatus) cameraStatus.innerHTML = '<p class="text-danger"><i class="ti ti-x"></i> Gagal memulai kamera: ' + err + '</p>';
+                            isScanning = false;
+                            if (startButton) startButton.style.display = 'inline-block';
+                            if (stopButton) stopButton.style.display = 'none';
+                        });
+                    } else {
+                        console.error("Kamera tidak ditemukan");
+                        if (cameraStatus) cameraStatus.innerHTML = '<p class="text-danger"><i class="ti ti-x"></i> Kamera tidak ditemukan</p>';
+                        isScanning = false;
+                        if (startButton) startButton.style.display = 'inline-block';
+                        if (stopButton) stopButton.style.display = 'none';
+                    }
+                }).catch(err => {
+                    console.error("Gagal mengakses kamera: ", err);
+                    if (cameraStatus) cameraStatus.innerHTML = '<p class="text-danger"><i class="ti ti-x"></i> Gagal mengakses kamera: ' + err + '</p>';
+                    isScanning = false;
+                    if (startButton) startButton.style.display = 'inline-block';
+                    if (stopButton) stopButton.style.display = 'none';
+                });
+            }
+
+            // Fungsi untuk menghentikan scanning
+            function stopScanning() {
+                if (!isScanning || !html5QrCode) return;
+                
+                html5QrCode.stop().then(() => {
+                    isScanning = false;
+                    const startButton = document.getElementById('startButton');
+                    const stopButton = document.getElementById('stopButton');
+                    const cameraStatus = document.getElementById('cameraStatus');
+                    
+                    if (startButton) startButton.style.display = 'inline-block';
+                    if (stopButton) stopButton.style.display = 'none';
+                    if (cameraStatus) cameraStatus.innerHTML = '<p class="text-muted"><i class="ti ti-camera"></i> Kamera dihentikan. Klik "Mulai Scan" untuk memulai kembali...</p>';
+                }).catch(err => {
+                    console.error('Gagal menghentikan kamera: ', err);
+                    isScanning = false;
+                });
+            }
+
+            // Event listener untuk tombol mulai scan
+            const startBtn = document.getElementById('startButton');
+            if (startBtn) {
+                startBtn.addEventListener('click', startScanning);
+            }
+
+            // Event listener untuk tombol stop scan
+            const stopBtn = document.getElementById('stopButton');
+            if (stopBtn) {
+                stopBtn.addEventListener('click', stopScanning);
+            }
+
+            // Event listener untuk tombol debug
+            const debugBtn = document.getElementById('debugCodeBtn');
+            if (debugBtn) {
+                debugBtn.addEventListener('click', function() {
+                    if (lastScanned) {
+                        showDebugInfo('Kode terakhir yang dipindai: <strong>' + lastScanned + '</strong><br>' +
+                            'Tanggal saat ini: <strong>' + new Date().toLocaleDateString() + '</strong><br>' +
+                            'Status pemrosesan: <strong>' + (isProcessing ? 'Sedang diproses' : 'Siap') + '</strong>');
+                    } else {
+                        showDebugInfo('Belum ada kode yang dipindai. Silakan lakukan scan terlebih dahulu.');
+                    }
+                });
+            }
+
+            // Event listener untuk tombol upload gambar
+            const uploadBtn = document.getElementById('uploadImageBtn');
+            const uploadZone = document.getElementById('uploadZone');
+            if (uploadBtn && uploadZone) {
+                uploadBtn.addEventListener('click', function() {
+                    uploadZone.style.display = 'block';
+                });
+            }
+
+            // Event listener untuk file input
+            const qrImageUpload = document.getElementById('qrImageUpload');
+            const uploadedImagePreview = document.getElementById('uploadedImagePreview');
+            const processImageBtn = document.getElementById('processImageBtn');
+            
+            if (qrImageUpload && uploadedImagePreview && processImageBtn) {
+                qrImageUpload.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function(event) {
+                            uploadedImagePreview.innerHTML = '<img src="' + event.target.result + '" style="max-width: 200px; max-height: 200px; border: 1px solid #ccc;" alt="Preview QR">';
+                            processImageBtn.disabled = false;
+                        }
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+
+            // Event listener untuk tombol proses gambar
+            if (processImageBtn) {
+                processImageBtn.addEventListener('click', function() {
+                    const fileInput = document.getElementById('qrImageUpload');
+                    if (fileInput.files.length > 0) {
+                        // Untuk versi ini, kita hanya akan memproses kode yang sudah diketahui
+                        const debugContent = document.getElementById('debugContent');
+                        if (debugContent && debugContent.innerText.includes('Kode QR dari gambar:')) {
+                            // Jika sudah ada informasi kode QR dari debug sebelumnya
+                            const regex = /Kode QR dari gambar: <strong>(.*?)<\/strong>/;
+                            const match = debugContent.innerHTML.match(regex);
+                            if (match && match[1]) {
+                                const qrCodeContent = match[1];
+                                handleScannedCode(qrCodeContent, 'upload');
+                            } else {
+                                showScanStatus('Silakan gunakan fitur debug untuk melihat kode QR terlebih dahulu.', 'error');
+                            }
+                        } else {
+                            showScanStatus('Silakan gunakan fitur debug untuk melihat kode QR dari gambar terlebih dahulu.', 'error');
+                        }
+                    } else {
+                        showScanStatus('Silakan pilih file gambar terlebih dahulu.', 'error');
+                    }
+                });
+            }
+        });
     </script>
 @endpush

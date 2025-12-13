@@ -5,7 +5,7 @@
 @section('content')
 <div class="container-xxl flex-grow-1 container-p-y">
     <h4 class="fw-bold py-3 mb-4">
-        <span class="text-muted fw-light">Riwayat Parkir /</span> Detail
+        <span class="text-muted fw/light">Riwayat Parkir /</span> Detail
     </h4>
 
     <div class="row">
@@ -81,37 +81,45 @@
             </div>
         </div>
 
-        <!-- QR Code dan Aksi -->
+        <!-- QR Code dan Aksi untuk Pengguna -->
         <div class="col-xl-4">
+            <!-- Card untuk QR Code Pengguna -->
             <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">QR Code</h5>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">QR Code Parkir</h5>
                 </div>
                 <div class="card-body text-center">
-                    @if($qrCodeImage)
-                        <div class="mb-3">
+                    <div class="mb-3" style="display: flex; justify-content: center; align-items: center; min-height: 220px; background: #f8f9fa; border-radius: 10px; padding: 15px;">
+                        @if($qrCodeImage)
                             @if(strpos($qrCodeImage, '<svg') !== false)
-                                <div id="qrCodeContainer">
-                                    {!! $qrCodeImage !!} <!-- Render SVG directly -->
+                                <div id="qrCodeContainer" style="padding: 20px; background: white; border-radius: 10px; display: inline-block; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                                    {!! $qrCodeImage !!}
                                 </div>
                             @else
                                 <img id="qrCodeContainer"
                                      src="data:image/png;base64,{{ base64_encode($qrCodeImage) }}"
                                      alt="QR Code"
                                      class="img-fluid border border-1 rounded"
-                                     style="max-width: 250px; height: auto;">
+                                     style="padding: 20px; background: white; border-radius: 10px; max-width: 180px; height: auto; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
                             @endif
-                        </div>
-                        <p class="mb-0">
-                            <small class="text-muted">
-                                QR Code untuk kode: {{ $parkingEntry->qrCode->code ?? '-' }}
-                            </small>
-                        </p>
-                        <button type="button" class="btn btn-outline-primary mt-2" onclick="downloadQRCode()">
-                            <i class="ti ti-download"></i> Download QR Code
-                        </button>
-                    @else
-                        <p class="text-muted">QR Code tidak tersedia</p>
+                        @else
+                            <p class="text-muted">QR Code tidak tersedia</p>
+                        @endif
+                    </div>
+                    @if($parkingEntry->qrCode)
+                    <p class="mb-1" style="font-size: 0.85rem;">
+                        <strong>{{ $parkingEntry->user->id }} - {{ $parkingEntry->vehicle_plate_number ?: 'NO_PLATE' }} - {{ $parkingEntry->qrCode->date->format('dmy') }}</strong>
+                    </p>
+                    @endif
+                    <button type="button" class="btn btn-outline-primary mt-2" onclick="downloadQRCode()">
+                        <i class="ti ti-download"></i> Download QR Code
+                    </button>
+                    
+                    <!-- Tambahkan informasi scanning -->
+                    @if(!$parkingEntry->parkingExit)
+                    <div class="alert alert-info mt-3" style="font-size: 0.85rem;">
+                        <i class="ti ti-info-circle"></i> QR Code ini bisa digunakan untuk keluar dari area parkir
+                    </div>
                     @endif
                 </div>
             </div>
@@ -127,6 +135,14 @@
                     <a href="{{ route('scan.barcode.page') }}" class="btn btn-primary w-100">
                         <i class="ti ti-scan"></i> Scan Barcode
                     </a>
+                    
+                    @if(!$parkingEntry->parkingExit)
+                    <div class="mt-2">
+                        <span class="text-muted" style="font-size: 0.8rem;">
+                            <i class="ti ti-arrow-right"></i> Gunakan QR code di atas di mesin keluar parkir
+                        </span>
+                    </div>
+                    @endif
                 </div>
             </div>
         </div>
@@ -139,39 +155,122 @@ function downloadQRCode() {
 
     if (!qrCodeContainer) {
         console.error('QR Code container not found');
+        alert('QR Code tidak ditemukan untuk diunduh.');
         return;
     }
 
     // Check if the element is an SVG or an image
-    if (qrCodeContainer.tagName.toLowerCase() === 'svg') {
-        // Handle SVG download
-        downloadSVGAsPNG(qrCodeContainer);
-    } else if (qrCodeContainer.tagName.toLowerCase() === 'img') {
+    if (qrCodeContainer.tagName && qrCodeContainer.tagName.toLowerCase() === 'svg') {
+        // Handle SVG download - clone the SVG to add white background
+        const clonedSvg = qrCodeContainer.cloneNode(true);
+        const svgString = new XMLSerializer().serializeToString(clonedSvg);
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Set canvas size with padding
+        const svgWidth = qrCodeContainer.viewBox.baseVal.width || 250;
+        const svgHeight = qrCodeContainer.viewBox.baseVal.height || 250;
+        canvas.width = svgWidth + 40;
+        canvas.height = svgHeight + 40;
+
+        // Fill with white background
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const img = new Image();
+        img.onload = function() {
+            // Center the image on canvas with padding
+            const x = (canvas.width - img.width) / 2;
+            const y = (canvas.height - img.height) / 2;
+            ctx.drawImage(img, x, y);
+
+            const pngUrl = canvas.toDataURL('image/png');
+            const downloadLink = document.createElement('a');
+            downloadLink.href = pngUrl;
+            downloadLink.download = 'qr-code-{{ $parkingEntry->kode_parkir }}.png';
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        };
+
+        img.onerror = function() {
+            console.error('Error loading SVG for canvas conversion');
+            alert('Gagal mengunduh QR code. Silakan coba lagi.');
+        };
+
+        const blob = new Blob([svgString], { type: 'image/svg+xml' });
+        const url = URL.createObjectURL(blob);
+        img.src = url;
+    } else if (qrCodeContainer.tagName && qrCodeContainer.tagName.toLowerCase() === 'img') {
         // Handle image download
-        downloadImageAsPNG(qrCodeContainer);
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Create image element from the source
+        const imgElement = new Image();
+        imgElement.crossOrigin = "Anonymous"; // Untuk menghindari CORS issues
+        imgElement.onload = function() {
+            // Add padding and white background
+            const originalWidth = imgElement.width;
+            const originalHeight = imgElement.height;
+            const padding = 25;
+            canvas.width = originalWidth + (padding * 2);
+            canvas.height = originalHeight + (padding * 2);
+
+            // Fill with white background
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw the image with padding
+            ctx.drawImage(imgElement, padding, padding);
+
+            // Convert to data URL and download
+            const pngUrl = canvas.toDataURL('image/png');
+            const downloadLink = document.createElement('a');
+            downloadLink.href = pngUrl;
+            downloadLink.download = 'qr-code-{{ $parkingEntry->kode_parkir }}.png';
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        };
+
+        imgElement.onerror = function() {
+            console.error('Error loading image for canvas conversion');
+            alert('Gagal mengunduh QR code. Silakan coba lagi.');
+        };
+
+        imgElement.src = qrCodeContainer.src;
     } else {
         // If it's a div containing the SVG
-        const svgElement = qrCodeContainer.querySelector('svg');
+        const svgElement = qrCodeContainer.querySelector && qrCodeContainer.querySelector('svg');
         if (svgElement) {
             downloadSVGAsPNG(svgElement);
         } else {
-            console.error('QR Code element not found');
+            console.error('QR Code element not found or not supported for download');
+            alert('Gagal mengunduh QR code. Format tidak didukung.');
         }
     }
 }
 
 function downloadSVGAsPNG(svgElement) {
-    const svgData = new XMLSerializer().serializeToString(svgElement);
+    const clonedSvg = svgElement.cloneNode(true);
+    const svgData = new XMLSerializer().serializeToString(clonedSvg);
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
 
-    const svgSize = svgElement.viewBox.baseVal || { width: 200, height: 200 };
-    canvas.width = svgSize.width;
-    canvas.height = svgSize.height;
+    // Set canvas size with padding
+    const svgSize = svgElement.viewBox.baseVal || { width: 250, height: 250 };
+    const padding = 20;
+    canvas.width = svgSize.width + (padding * 2);
+    canvas.height = svgSize.height + (padding * 2);
+
+    // Fill with white background
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     const img = new Image();
     img.onload = function() {
-        ctx.drawImage(img, 0, 0, svgSize.width, svgSize.height);
+        ctx.drawImage(img, padding, padding);
 
         const pngUrl = canvas.toDataURL('image/png');
         const downloadLink = document.createElement('a');
@@ -182,28 +281,15 @@ function downloadSVGAsPNG(svgElement) {
         document.body.removeChild(downloadLink);
     };
 
-    // Create a blob URL for the SVG
+    img.onerror = function() {
+        console.error('Error loading SVG for canvas conversion');
+        alert('Gagal mengunduh QR code. Silakan coba lagi.');
+    };
+
+    // Create a blob URL for the SVG with padding
     const blob = new Blob([svgData], { type: 'image/svg+xml' });
     const url = URL.createObjectURL(blob);
     img.src = url;
-}
-
-function downloadImageAsPNG(imgElement) {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-
-    canvas.width = imgElement.width;
-    canvas.height = imgElement.height;
-
-    ctx.drawImage(imgElement, 0, 0);
-
-    const pngUrl = canvas.toDataURL('image/png');
-    const downloadLink = document.createElement('a');
-    downloadLink.href = pngUrl;
-    downloadLink.download = 'qr-code-{{ $parkingEntry->kode_parkir }}.png';
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-    document.body.removeChild(downloadLink);
 }
 </script>
 @endsection
