@@ -18,11 +18,11 @@ class ParkingManagementController extends Controller
     }
 
     /**
-     * Authorize user is admin
+     * Authorize user is admin or petugas
      */
     private function authorizeAdmin()
     {
-        if (!Auth::check() || !Auth::user()->hasRole('Admin')) {
+        if (!Auth::check() || (!Auth::user()->hasRole('Admin') && !Auth::user()->hasRole('Petugas'))) {
             abort(403, 'Anda tidak memiliki akses ke halaman ini.');
         }
     }
@@ -96,7 +96,7 @@ class ParkingManagementController extends Controller
         // Data untuk grafik (7 hari terbaru) - dioptimalkan dengan satu query
         $statistics = collect();
         for ($i = 6; $i >= 0; $i--) {
-            $date = $today->subDays($i);
+            $date = $today->copy()->subDays($i); // Gunakan copy() agar tidak mengubah $today asli
             $entryCount = ParkingEntry::whereDate('entry_time', $date)->count();
             $exitCount = ParkingExit::whereDate('exit_time', $date)->count();
             $revenue = ParkingExit::whereDate('exit_time', $date)->sum('parking_fee');
@@ -144,9 +144,17 @@ class ParkingManagementController extends Controller
     {
         $this->authorizeAdmin();
 
-        $parkingEntry = ParkingEntry::with(['user:id,name,username', 'qrCode:id,user_id,code,date', 'parkingExit:id,parking_entry_id,exit_time,parking_fee'])->findOrFail($id);
+        // Ambil entri parkir dengan user dan parkingExit
+        $parkingEntry = ParkingEntry::with(['user:id,name,username', 'parkingExit:id,parking_entry_id,exit_time,parking_fee'])->findOrFail($id);
+        
+        // Ambil QR code milik user, bukan dari entri parkir (yang bisa saja salah terkait)
+        // Kita ambil QR code yang valid untuk user yang sama dan untuk tanggal yang sama
+        $qrCode = QrCode::where('user_id', $parkingEntry->user_id)
+            ->whereDate('date', $parkingEntry->entry_time->toDateString())
+            ->orderBy('created_at', 'desc') // Ambil QR code terbaru untuk tanggal ini
+            ->first();
 
-        return view('parking.management.show', compact('parkingEntry'));
+        return view('parking.management.show', compact('parkingEntry', 'qrCode'));
     }
 
     /**
@@ -246,7 +254,8 @@ class ParkingManagementController extends Controller
         // Buat QR code untuk entri manual
         $qrCodeService = app(\App\Services\QRCodeService::class);
         $user = User::find($validated['user_id']);
-        $dailyQr = $qrCodeService->generateDailyQRCode($user, $validated['entry_time']->format('Y-m-d'));
+        $date = $validated['entry_time'] ? \Carbon\Carbon::parse($validated['entry_time'])->toDateString() : today();
+        $dailyQr = $qrCodeService->generateDailyQRCode($user, $date);
 
         // Buat catatan masuk parkir sementara tanpa kode parkir
         $parkingEntry = ParkingEntry::create([
@@ -434,5 +443,27 @@ class ParkingManagementController extends Controller
         $parkingEntry->delete();
 
         return redirect()->route('parking.management.index')->with('success', 'Entri parkir berhasil dihapus.');
+    }
+
+    /**
+     * Generate and download PDF with parking information and QR code
+     */
+    public function downloadPDF($id)
+    {
+        $this->authorizeAdmin();
+
+        $parkingEntry = ParkingEntry::with(['user:id,name,username', 'qrCode:id,user_id,code,date', 'parkingExit:id,parking_entry_id,exit_time,parking_fee'])->findOrFail($id);
+
+        // Generate QR code for the entry if it has a QR code
+        $qrCodeData = null;
+        if ($parkingEntry->qrCode) {
+            $qrCodeData = base64_encode(\SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')->size(200)->generate($parkingEntry->qrCode->code));
+        }
+
+        // Generate PDF
+        $pdf = app('dompdf.wrapper');
+        $pdf->loadView('parking.management.pdf-ticket', compact('parkingEntry', 'qrCodeData'));
+
+        return $pdf->download('parkir-ticket-' . $parkingEntry->kode_parkir . '.pdf');
     }
 }

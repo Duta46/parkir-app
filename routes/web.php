@@ -44,7 +44,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/parking-history', [ParkingController::class, 'userParkingHistory'])->middleware(['auth', 'canAccessScanPage'])->name('parking.history');
     Route::get('/parking-history/{id}', [ParkingController::class, 'viewParkingDetail'])->middleware(['auth', 'canAccessScanPage'])->name('parking.history.detail');
 
-    Route::prefix('parking-management')->middleware('role:Admin')->group(function() {
+    Route::prefix('parking-management')->middleware('role:Admin|Petugas')->group(function() {
         Route::get('/', [ParkingManagementController::class, 'index'])->name('parking.management.index');
         Route::get('/all', [ParkingManagementController::class, 'all'])->name('parking.management.all');
         Route::get('/search', [ParkingManagementController::class, 'search'])->name('parking.management.search');
@@ -60,6 +60,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/{id}/exit', [ParkingManagementController::class, 'addExit'])->name('parking.management.addExit');
         Route::post('/{id}/process-exit', [ParkingManagementController::class, 'processExit'])->name('parking.management.process-exit');
         Route::delete('/{id}', [ParkingManagementController::class, 'destroy'])->name('parking.management.destroy');
+        Route::get('/{id}/download-pdf', [ParkingManagementController::class, 'downloadPDF'])->name('parking.management.download-pdf');
     });
 
     // Parking transaction routes for admin

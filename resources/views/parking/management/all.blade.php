@@ -69,6 +69,9 @@
                                         <a class="dropdown-item" href="{{ route('parking.management.show', $entry->id) }}">
                                             <i class="ti ti-eye me-1"></i> Detail
                                         </a>
+                                        <a class="dropdown-item" href="{{ route('parking.management.download-pdf', $entry->id) }}" target="_blank">
+                                            <i class="ti ti-download me-1"></i> Download PDF
+                                        </a>
                                         @if(!$entry->parkingExit)
                                         <!-- Tombol Keluar dengan Modal -->
                                         <a class="dropdown-item" href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#exitModal{{ $entry->id }}">
