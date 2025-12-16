@@ -182,7 +182,7 @@
                 </li>
                 <li class="menu-item">
                   <a href="{{ route('admin.scan.barcode.page') }}" class="menu-link">
-                    <div data-i18n="ScanBarcode">Pindai Barcode</div>
+                    <div data-i18n="Scan Barcode">Pindai Barcode</div>
                   </a>
                 </li>
               </ul>
@@ -191,14 +191,14 @@
             <!-- Parking Menu for Dosen, Mahasiswa, and Pegawai -->
             <li class="menu-item">
               <a href="{{ route('parking.history') }}" class="menu-link">
-                <i class="menu-icon icon-base ti tabler-car"></i>
+                <i class="menu-icon icon-base fa-solid fa-car"></i>
                 <div data-i18n="Parkir">Parkir</div>
               </a>
             </li>
             <li class="menu-item">
               <a href="{{ route('scan.barcode.page') }}" class="menu-link">
                 <i class="menu-icon icon-base ti tabler-scan"></i>
-                <div data-i18n="ScanBarcode">Pindai Barcode</div>
+                <div data-i18n="Scan Barcode">Pindai Barcode</div>
               </a>
             </li>
             @elseif(auth()->user()->hasRole('Petugas'))
