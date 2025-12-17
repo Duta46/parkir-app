@@ -17,7 +17,7 @@
                 </div>
                 <div class="card-body">
                     <div class="alert alert-info">
-                        <i class="ti ti-info-circle"></i>
+                        <i class="fa-solid fa-info-circle"></i>
                         <strong>Petunjuk:</strong> 
                         <div class="mt-1">
                             <ul class="mb-0">
@@ -42,7 +42,7 @@
 
                             <div id="cameraStatus" class="mt-2 text-center">
                                 <p class="text-muted">
-                                    <i class="ti ti-camera"></i> Kamera belum diaktifkan. Klik "Mulai Scan" untuk memulai...
+                                    <i class="fa-solid fa-camera"></i> Kamera belum diaktifkan. Klik "Mulai Scan" untuk memulai...
                                 </p>
                             </div>
                         </div>
