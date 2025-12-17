@@ -16,6 +16,10 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    // Settings route
+    Route::get('/settings', [App\Http\Controllers\SettingsController::class, 'index'])->name('settings');
+    Route::patch('/settings', [App\Http\Controllers\SettingsController::class, 'update'])->name('settings.update');
+
     // Parking QR code routes - admin/petugas only for generation, all users for scanning
     Route::middleware('role:Admin|Petugas')->group(function() {
         Route::get('/my-qr-code', [ParkingController::class, 'showQRCode'])->name('qr-code.show');

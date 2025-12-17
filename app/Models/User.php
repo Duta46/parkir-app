@@ -26,6 +26,7 @@ class User extends Authenticatable
         'password',
         'vehicle_type',
         'vehicle_plate_number',
+        'profile_photo_path',
     ];
 
     protected $casts = [
