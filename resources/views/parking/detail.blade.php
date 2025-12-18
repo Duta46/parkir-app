@@ -132,10 +132,13 @@
                     <a href="{{ route('parking.history') }}" class="btn btn-secondary w-100 mb-2">
                         <i class="ti ti-arrow-left"></i> Kembali ke Riwayat
                     </a>
+                    <a href="{{ route('parking.history.download-pdf', $parkingEntry->id) }}" class="btn btn-info w-100 mb-2">
+                        <i class="ti ti-download"></i> Download PDF Tiket
+                    </a>
                     <a href="{{ route('scan.barcode.page') }}" class="btn btn-primary w-100">
                         <i class="ti ti-scan"></i> Scan Barcode
                     </a>
-                    
+
                     @if(!$parkingEntry->parkingExit)
                     <div class="mt-2">
                         <span class="text-muted" style="font-size: 0.8rem;">

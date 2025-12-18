@@ -456,8 +456,17 @@ class ParkingManagementController extends Controller
 
         // Generate QR code for the entry if it has a QR code
         $qrCodeData = null;
+
         if ($parkingEntry->qrCode) {
-            $qrCodeData = base64_encode(\SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')->size(200)->generate($parkingEntry->qrCode->code));
+            try {
+                // Generate QR code as SVG first to avoid imagick dependency
+                $qrCodeData = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')
+                    ->size(150)
+                    ->generate($parkingEntry->qrCode->code);
+            } catch (\Exception $e) {
+                // Fallback to null if generation fails
+                $qrCodeData = null;
+            }
         }
 
         // Generate PDF

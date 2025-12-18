@@ -78,6 +78,10 @@
         <div class="info-section">
             <h3>Informasi Tiket</h3>
             <div class="info-row">
+                <div class="info-label">ID Entry:</div>
+                <div class="info-value">{{ $parkingEntry->id }}</div>
+            </div>
+            <div class="info-row">
                 <div class="info-label">Kode Parkir:</div>
                 <div class="info-value">{{ $parkingEntry->kode_parkir }}</div>
             </div>
@@ -120,8 +124,11 @@
         <div class="qr-code">
             <h3>Kode QR</h3>
             @if($qrCodeData)
-                <img src="data:image/png;base64,{{ $qrCodeData }}" alt="QR Code">
-                <p style="margin-top: 10px; font-size: 14px;">Scan untuk proses keluar parkir</p>
+                <!-- Simple SVG QR Code display -->
+                <div style="text-align: center; margin: 10px 0; padding: 10px; border: 1px solid #ddd; background: white; display: inline-block;">
+                    {!! $qrCodeData !!}
+                </div>
+                <p style="margin-top: 10px; font-size: 14px; text-align: center;">Scan untuk proses keluar parkir</p>
             @else
                 <p>QR Code tidak tersedia</p>
             @endif

@@ -47,6 +47,7 @@ Route::middleware('auth')->group(function () {
     // Parking menu for users - view their complete parking data
     Route::get('/parking-history', [ParkingController::class, 'userParkingHistory'])->middleware(['auth', 'canAccessScanPage'])->name('parking.history');
     Route::get('/parking-history/{id}', [ParkingController::class, 'viewParkingDetail'])->middleware(['auth', 'canAccessScanPage'])->name('parking.history.detail');
+    Route::get('/parking-history/{id}/download-pdf', [ParkingController::class, 'downloadUserParkingPDF'])->middleware(['auth', 'canAccessScanPage'])->name('parking.history.download-pdf');
 
     Route::prefix('parking-management')->middleware('role:Admin|Petugas')->group(function() {
         Route::get('/', [ParkingManagementController::class, 'index'])->name('parking.management.index');

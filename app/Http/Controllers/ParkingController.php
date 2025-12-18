@@ -1018,4 +1018,38 @@ class ParkingController extends Controller
 
         return view('parking.management.show-detail', compact('parkingEntry', 'qrCodeImage'));
     }
+
+    /**
+     * Generate and download PDF with parking information and QR code for user
+     */
+    public function downloadUserParkingPDF($id)
+    {
+        $user = Auth::user();
+
+        // Ambil entri parkir milik pengguna yang sedang login
+        $parkingEntry = \App\Models\ParkingEntry::with(['user:id,name,username', 'qrCode:id,user_id,code,date', 'parkingExit:id,parking_entry_id,exit_time,parking_fee'])
+            ->where('user_id', $user->id)
+            ->findOrFail($id);
+
+        // Generate QR code for the entry if it has a QR code
+        $qrCodeData = null;
+        if ($parkingEntry->qrCode) {
+            try {
+                // Generate QR code as SVG first to avoid imagick dependency
+                // For some systems, even SVG might need imagick, so let's try direct generation
+                $qrCodeData = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')
+                    ->size(150)
+                    ->generate($parkingEntry->qrCode->code);
+            } catch (\Exception $e) {
+                // Fallback if generation fails
+                $qrCodeData = null;
+            }
+        }
+
+        // Generate PDF
+        $pdf = app('dompdf.wrapper');
+        $pdf->loadView('parking.management.pdf-ticket', compact('parkingEntry', 'qrCodeData'));
+
+        return $pdf->download('parkir-ticket-' . $parkingEntry->kode_parkir . '.pdf');
+    }
 }

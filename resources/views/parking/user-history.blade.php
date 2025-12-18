@@ -143,8 +143,11 @@
                                 @endif
                             </td>
                             <td>
-                                <a href="{{ route('parking.history.detail', $entry->id) }}" class="btn btn-sm btn-outline-primary">
+                                <a href="{{ route('parking.history.detail', $entry->id) }}" class="btn btn-sm btn-outline-primary me-1">
                                     <i class="ti ti-eye"></i> Lihat Detail
+                                </a>
+                                <a href="{{ route('parking.history.download-pdf', $entry->id) }}" class="btn btn-sm btn-outline-info">
+                                    <i class="ti ti-download"></i> PDF
                                 </a>
                             </td>
                         </tr>
