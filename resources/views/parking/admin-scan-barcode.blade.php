@@ -30,9 +30,7 @@
                     <div class="row">
                         <div class="col-md-8 offset-md-2">
                             <div class="text-center mb-4">
-                                <div id="qr-reader" style="width: 100%; max-width: 400px; margin: 0 auto; border: 1px solid #ccc; background-color: #000; position: relative;">
-                                    <div id="scan-indicator" style="position: absolute; top: 10px; left: 10px; background: rgba(0, 255, 0, 0.7); color: white; padding: 5px 10px; border-radius: 5px; font-size: 12px; z-index: 1000;">AUTO SCAN AKTIF</div>
-                                </div>
+                                <div id="qr-reader" style="width: 100%; max-width: 400px; margin: 0 auto; border: 1px solid #ccc; background-color: #000;"></div>
                                 <div id="qr-reader-buttons" class="mt-2">
                                     <button id="startButton" class="btn btn-success">Mulai Scan</button>
                                     <button id="stopButton" class="btn btn-warning" style="display: none;">Stop Scan</button>
@@ -48,9 +46,6 @@
                     </div>
 
                     <div class="text-center mb-3">
-                        <button id="debugCodeBtn" class="btn btn-outline-info me-2">
-                            Debug: Tampilkan Kode Scan
-                        </button>
                         <button id="uploadImageBtn" class="btn btn-outline-primary">
                             Atau Upload Gambar QR Code
                         </button>
@@ -73,14 +68,6 @@
                          data-process-user-qrcode-exit-url="{{ route('parking.process.user.qrcode.exit') }}"
                          data-admin-scan-barcode-url="{{ route('admin.scan.barcode') }}"
                          data-csrf-token="{{ csrf_token() }}">
-                    </div>
-                    
-                    <!-- Debug area -->
-                    <div id="debugInfo" class="mt-3" style="display: none;">
-                        <div class="alert alert-secondary">
-                            <strong>Debug Info:</strong><br>
-                            <span id="debugContent"></span>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -230,19 +217,6 @@
                 }, 5000);
             }
 
-            // Fungsi untuk menampilkan informasi debug
-            function showDebugInfo(content) {
-                const debugInfo = document.getElementById('debugInfo');
-                const debugContent = document.getElementById('debugContent');
-                
-                if (debugContent) {
-                    debugContent.innerHTML = content;
-                }
-                
-                if (debugInfo) {
-                    debugInfo.style.display = 'block';
-                }
-            }
 
             // Fungsi untuk membuat permintaan AJAX
             function makeAjaxRequest(url, data) {
@@ -311,9 +285,10 @@
                 
                 // Menampilkan kode yang dipindai untuk debugging
                 console.log("QR Code Ditemukan:", content);
-                showDebugInfo('Kode QR yang diproses: <strong>' + content + '</strong><br>' +
-                    'Tanggal saat ini: <strong>' + new Date().toLocaleDateString() + '</strong><br>' +
-                    'Sumber: <strong>' + (source === 'upload' ? 'Upload Gambar' : 'Kamera') + '</strong>');
+                console.log('Kode QR yang diproses:', content, {
+                    tanggal: new Date().toLocaleDateString(),
+                    sumber: source === 'upload' ? 'Upload Gambar' : 'Kamera'
+                });
 
                 // Kirim ke endpoint khusus untuk memproses QR code pengguna sebagai exit
                 const urls = document.getElementById('routeUrls');
@@ -362,19 +337,6 @@
                     });
             }
 
-            // Event listener untuk tombol debug
-            const debugBtn = document.getElementById('debugCodeBtn');
-            if (debugBtn) {
-                debugBtn.addEventListener('click', function() {
-                    if (lastScanned) {
-                        showDebugInfo('Kode terakhir yang dipindai: <strong>' + lastScanned + '</strong><br>' +
-                            'Tanggal saat ini: <strong>' + new Date().toLocaleDateString() + '</strong><br>' +
-                            'Status pemrosesan: <strong>' + (isProcessing ? 'Sedang diproses' : 'Siap') + '</strong>');
-                    } else {
-                        showDebugInfo('Belum ada kode yang dipindai. Silakan lakukan scan terlebih dahulu.');
-                    }
-                });
-            }
 
             // Event listener untuk tombol upload gambar
             const uploadBtn = document.getElementById('uploadImageBtn');
@@ -414,7 +376,7 @@
                         reader.onload = function(event) {
                             // Kita perlu mengimplementasi OCR atau library untuk membaca QR code dari gambar
                             // Untuk sekarang, kita hanya menampilkan error bahwa fitur ini perlu pengembangan lebih lanjut
-                            showDebugInfo('Fitur membaca QR code dari gambar memerlukan pengembangan tambahan untuk mengimplementasi OCR atau library pembaca gambar QR.');
+                            console.log('Fitur membaca QR code dari gambar memerlukan pengembangan tambahan untuk mengimplementasi OCR atau library pembaca gambar QR.');
                         }
                         reader.readAsDataURL(file);
                     } else {

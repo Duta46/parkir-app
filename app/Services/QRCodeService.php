@@ -163,6 +163,71 @@ class QRCodeService
     }
 
     /**
+     * Generate QR code umum harian untuk semua pengguna (menggunakan tabel general_qr_codes)
+     *
+     * @param string|null $date Tanggal untuk QR code (default hari ini)
+     * @return \App\Models\GeneralQRCode
+     */
+    public function generateDailyGeneralQRCode(string $date = null): \App\Models\GeneralQRCode
+    {
+        $date = $date ? Carbon::parse($date) : Carbon::today();
+
+        // Cek apakah QR code umum sudah ada untuk tanggal ini
+        $qrCode = \App\Models\GeneralQRCode::whereDate('date', $date)
+            ->first();
+
+        if ($qrCode) {
+            return $qrCode;
+        }
+
+        // Generate QR code unik untuk umum
+        $code = $this->generateUniqueCodeForGeneralNew($date);
+
+        // Buat QR code baru di tabel general_qr_codes
+        $qrCode = \App\Models\GeneralQRCode::create([
+            'code' => $code,
+            'date' => $date,
+            'expires_at' => $date->endOfDay(), // Kadaluarsa di akhir hari
+        ]);
+
+        return $qrCode;
+    }
+
+    /**
+     * Generate kode unik untuk QR code umum (baru)
+     *
+     * @param Carbon $date
+     * @return string
+     */
+    private function generateUniqueCodeForGeneralNew(Carbon $date): string
+    {
+        // Buat kode unik untuk QR code umum dengan format: GENERAL-tanggal-random
+        $prefix = 'GENERAL';
+        $formattedDate = $date->format('dmy');
+        $random = Str::random(8);
+
+        // Gabungkan menjadi format: GENERAL-tanggal-random
+        return $prefix . '-' . $formattedDate . '-' . $random;
+    }
+
+    /**
+     * Validasi general QR code untuk masuk - bisa digunakan oleh siapa saja
+     * Hanya berlaku untuk hari ini dan belum kadaluarsa
+     *
+     * @param string $code
+     * @return \App\Models\GeneralQRCode|null
+     */
+    public function validateGeneralQRCodeForEntry(string $code): ?\App\Models\GeneralQRCode
+    {
+        $qrCode = \App\Models\GeneralQRCode::where('code', $code)
+            ->whereDate('date', Carbon::today())
+            ->where('expires_at', '>', Carbon::now())
+            ->first();
+
+        return $qrCode;
+    }
+
+    /**
      * Generate konten gambar QR code
      *
      * @param string $code
@@ -199,7 +264,7 @@ class QRCodeService
                     'size' => $size,
                     'error' => $e2->getMessage()
                 ]);
-                
+
                 return '';
             }
         }

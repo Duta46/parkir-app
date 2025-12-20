@@ -74,13 +74,13 @@ class ParkingManagementController extends Controller
         // Ambil statistik dengan query yang dioptimalkan
         $totalUsers = User::count();
         $activeEntries = ParkingEntry::whereDoesntHave('parkingExit')->count();
-        $totalExitsToday = ParkingExit::whereDate('exit_time', today())->count();
-        $totalRevenueToday = ParkingExit::whereDate('exit_time', today())
+        $totalExitsToday = ParkingExit::whereDate('exit_time', today()->toDateString())->count();
+        $totalRevenueToday = ParkingExit::whereDate('exit_time', today()->toDateString())
             ->sum('parking_fee');
 
         // Statistik tambahan
         $today = today();
-        $totalEntriesToday = ParkingEntry::whereDate('entry_time', $today)->count();
+        $totalEntriesToday = ParkingEntry::whereDate('entry_time', $today->toDateString())->count();
         $totalRevenueThisMonth = ParkingExit::whereMonth('exit_time', $today->month)
                                            ->whereYear('exit_time', $today->year)
                                            ->sum('parking_fee');
@@ -90,7 +90,7 @@ class ParkingManagementController extends Controller
 
         $revenueByVehicleType = ParkingExit::join('parking_entries', 'parking_exits.parking_entry_id', '=', 'parking_entries.id')
                                           ->selectRaw('parking_entries.vehicle_type, COUNT(*) as count, SUM(parking_exits.parking_fee) as total_revenue')
-                                          ->whereDate('parking_exits.exit_time', $today)
+                                          ->whereDate('parking_exits.exit_time', $today->toDateString())
                                           ->groupBy('parking_entries.vehicle_type')
                                           ->get();
 
@@ -98,9 +98,9 @@ class ParkingManagementController extends Controller
         $statistics = collect();
         for ($i = 6; $i >= 0; $i--) {
             $date = $today->copy()->subDays($i); // Gunakan copy() agar tidak mengubah $today asli
-            $entryCount = ParkingEntry::whereDate('entry_time', $date)->count();
-            $exitCount = ParkingExit::whereDate('exit_time', $date)->count();
-            $revenue = ParkingExit::whereDate('exit_time', $date)->sum('parking_fee');
+            $entryCount = ParkingEntry::whereDate('entry_time', $date->toDateString())->count();
+            $exitCount = ParkingExit::whereDate('exit_time', $date->toDateString())->count();
+            $revenue = ParkingExit::whereDate('exit_time', $date->toDateString())->sum('parking_fee');
 
             $statistics[] = [
                 'date' => $date->format('d M'),
@@ -453,35 +453,111 @@ class ParkingManagementController extends Controller
     {
         $this->authorizeAdmin();
 
-        $parkingEntry = ParkingEntry::with(['user:id,name,username', 'qrCode:id,user_id,code,date', 'parkingExit:id,parking_entry_id,exit_time,parking_fee'])->findOrFail($id);
+        $parkingEntry = ParkingEntry::with([
+            'user:id,name,username',
+            'qrCode:id,user_id,code,date',
+            'parkingExit:id,parking_entry_id,exit_time,parking_fee'
+        ])->findOrFail($id);
 
-        // Generate QR code based on kode_parkir since it's always available
-        $qrCodeData = null;
-
-        if (!empty($parkingEntry->kode_parkir)) {
-            try {
-                // Using Endroid QR code service for better PDF compatibility
-                $qrCodeService = app(\App\Services\QRCodeGeneratorService::class);
-                $qrCodeData = $qrCodeService->generateQRCodePng($parkingEntry->kode_parkir, 150);
-            } catch (\Exception $e) {
-                Log::error('Error generating QR from kode_parkir with Endroid: ' . $e->getMessage());
-                // Fallback to SimpleSoftwareIO if Endroid fails
-                try {
-                    $qrCodeData = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
-                        ->size(150)
-                        ->generate($parkingEntry->kode_parkir);
-                } catch (\Exception $e2) {
-                    Log::error('Error generating QR from kode_parkir with SimpleSoftwareIO: ' . $e2->getMessage());
-                    // Fallback if generation fails
-                    $qrCodeData = null;
-                }
-            }
-        }
+        $qrCodeData = $this->generateQRCodeData($parkingEntry);
 
         // Generate PDF
         $pdf = app('dompdf.wrapper');
         $pdf->loadView('parking.management.pdf-ticket', compact('parkingEntry', 'qrCodeData'));
 
         return $pdf->download('parkir-ticket-' . $parkingEntry->kode_parkir . '.pdf');
+    }
+
+    /**
+     * Generate QR code data for the PDF
+     */
+    private function generateQRCodeData($parkingEntry)
+    {
+        if (empty($parkingEntry->kode_parkir)) {
+            return null;
+        }
+
+        // Try primary QR code service
+        $qrCodeData = $this->generateQRCodeWithService($parkingEntry->kode_parkir);
+
+        // Fallback to secondary service if primary fails
+        if (!$qrCodeData) {
+            $qrCodeData = $this->generateQRCodeWithFallback($parkingEntry->kode_parkir);
+        }
+
+        return $qrCodeData;
+    }
+
+    /**
+     * Generate QR code using primary service
+     */
+    private function generateQRCodeWithService($kodeParkir)
+    {
+        try {
+            $qrCodeService = app(\App\Services\QRCodeGeneratorService::class);
+            return $qrCodeService->generateQRCodePng($kodeParkir, 150);
+        } catch (\Exception $e) {
+            Log::error('Error generating QR from kode_parkir with primary service: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Generate QR code using fallback service
+     */
+    private function generateQRCodeWithFallback($kodeParkir)
+    {
+        try {
+            return \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
+                ->size(150)
+                ->generate($kodeParkir);
+        } catch (\Exception $e) {
+            Log::error('Error generating QR from kode_parkir with fallback service: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Generate daily general QR code for all users (admin/petugas only)
+     */
+    public function generateDailyGeneralQRCode()
+    {
+        $this->authorizeAdmin();
+
+        $qrCodeService = app(\App\Services\QRCodeService::class);
+
+        // Generate general QR code for today that can be used by all users
+        $generalQRCode = $qrCodeService->generateDailyGeneralQRCode();
+
+        return response()->json([
+            'success' => true,
+            'qr_code' => $generalQRCode->code,
+            'expires_at' => $generalQRCode->expires_at->format('Y-m-d H:i:s'),
+            'message' => 'QR code umum berhasil dibuat untuk hari ini'
+        ]);
+    }
+
+    /**
+     * Get today's general QR code (admin/petugas only)
+     */
+    public function getTodayGeneralQRCode()
+    {
+        $this->authorizeAdmin();
+
+        $generalQRCode = \App\Models\GeneralQRCode::forToday()->first();
+
+        if (!$generalQRCode) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Belum ada QR code umum untuk hari ini'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'qr_code' => $generalQRCode->code,
+            'is_used' => $generalQRCode->is_used,
+            'expires_at' => $generalQRCode->expires_at->format('Y-m-d H:i:s'),
+        ]);
     }
 }

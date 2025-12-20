@@ -20,7 +20,8 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             UserSeeder::class,
             AssignPermissionToAdminSeeder::class,
-            AssignRoleToUserSeeder::class
+            AssignRoleToUserSeeder::class,
+            GeneralQRCodeSeeder::class
         ]);
     }
 }

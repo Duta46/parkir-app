@@ -15,6 +15,7 @@ class ParkingEntry extends Model
         'kode_parkir',
         'user_id',
         'qr_code_id',
+        'general_qr_code_id',
         'entry_time',
         'entry_location',
         'vehicle_type',
@@ -33,6 +34,11 @@ class ParkingEntry extends Model
     public function qrCode(): BelongsTo
     {
         return $this->belongsTo(\App\Models\QrCode::class);
+    }
+
+    public function generalQRCode(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\GeneralQRCode::class, 'general_qr_code_id');
     }
 
     public function parkingExit(): HasOne

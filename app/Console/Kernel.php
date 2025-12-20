@@ -15,6 +15,9 @@ class Kernel extends ConsoleKernel
     {
         // Jalankan perintah refresh setiap hari pukul 00:01
         $schedule->command('parkir:refresh-qr-harian')->dailyAt('00:01');
+
+        // Generate daily general QR code automatically at midnight
+        $schedule->command('parkir:generate-daily-qr')->dailyAt('00:05');
     }
 
     /**

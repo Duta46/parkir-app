@@ -60,6 +60,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/', [ParkingManagementController::class, 'store'])->name('parking.management.store');
         Route::post('/generate-qr-umum', [ParkingManagementController::class, 'generateQRCodeUmum'])->name('parking.management.generate-qr-umum');
         Route::post('/generate-qr-user', [ParkingManagementController::class, 'generateQRCodeForUser'])->name('parking.management.generate-qr-user');
+        Route::post('/generate-general-qr', [ParkingManagementController::class, 'generateDailyGeneralQRCode'])->name('parking.management.generate-general-qr');
+        Route::get('/get-today-general-qr', [ParkingManagementController::class, 'getTodayGeneralQRCode'])->name('parking.management.get-today-general-qr');
         Route::get('/{id}/edit', [ParkingManagementController::class, 'edit'])->name('parking.management.edit');
         Route::put('/{id}', [ParkingManagementController::class, 'update'])->name('parking.management.update');
         Route::post('/{id}/exit', [ParkingManagementController::class, 'addExit'])->name('parking.management.addExit');

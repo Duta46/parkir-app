@@ -48,12 +48,27 @@ class ParkingController extends Controller
         $activeEntries = 0;
         $totalExitsToday = 0;
         $totalRevenueToday = 0;
+        $generalQRCode = null;
+        $generalQRUsers = collect(); // Initialize as empty collection
 
-        if ($user->hasRole('Admin')) {
+        if ($user->hasRole(['Admin', 'Petugas'])) {
             $totalUsers = \App\Models\User::count();
             $activeEntries = \App\Models\ParkingEntry::whereDoesntHave('parkingExit')->count();
             $totalExitsToday = \App\Models\ParkingExit::whereDate('exit_time', today())->count();
             $totalRevenueToday = \App\Models\ParkingExit::whereDate('exit_time', today())->sum('parking_fee');
+
+            // Ambil QR code umum untuk hari ini
+            $generalQRCode = \App\Models\GeneralQRCode::whereDate('date', today())
+                ->first();
+
+            // Ambil pengguna yang sudah scan QR code umum hari ini
+            if ($generalQRCode) {
+                $generalQRUsers = \App\Models\ParkingEntry::with('user')
+                    ->where('general_qr_code_id', $generalQRCode->id)
+                    ->whereDate('entry_time', today())
+                    ->orderBy('entry_time', 'desc')
+                    ->get();
+            }
         }
 
         return view('dashboard', compact(
@@ -63,7 +78,9 @@ class ParkingController extends Controller
             'totalUsers',
             'activeEntries',
             'totalExitsToday',
-            'totalRevenueToday'
+            'totalRevenueToday',
+            'generalQRCode',
+            'generalQRUsers'
         ));
     }
 
@@ -112,103 +129,165 @@ class ParkingController extends Controller
                 'qr_code' => 'required|string',
             ]);
 
-            $qrCodeModel = $this->qrCodeService->validateQRCodeForEntry($request->qr_code);
-
-            if (!$qrCodeModel) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'QR code tidak valid atau telah kadaluarsa'
-                ], 400);
-            }
-
-            // Periksa apakah QR code adalah untuk pengguna tertentu atau umum
             $user = Auth::user();
 
-            // Jika QR code memiliki pemilik (bukan umum) dan bukan milik admin/petugas, maka hanya admin/petugas atau user dengan user_type pegawai yang bisa discan
-            if ($qrCodeModel->user_id && !$user->hasRole(['Admin', 'Petugas']) && $user->user_type !== 'pegawai') {
-                // Ambil user pemilik QR code untuk mengecek apakah dia admin/petugas
-                $qrCodeOwner = \App\Models\User::find($qrCodeModel->user_id);
+            // Cek apakah ini general QR code (dari tabel general_qr_codes) atau personal QR code (dari tabel qr_codes)
+            $generalQRCode = $this->qrCodeService->validateGeneralQRCodeForEntry($request->qr_code);
 
-                // Jika tidak bisa menemukan pemilik QR code, tolak
-                if (!$qrCodeOwner) {
+            if ($generalQRCode) {
+                // Ini adalah general QR code - bisa digunakan oleh semua user (mahasiswa, dosen, pegawai)
+                // Hanya bisa digunakan sekali per hari per pengguna
+
+                // Cek apakah pengguna sudah scan hari ini
+                $todayEntry = \App\Models\ParkingEntry::where('user_id', $user->id)
+                    ->whereDate('entry_time', today())
+                    ->first();
+
+                if ($todayEntry) {
                     return response()->json([
                         'success' => false,
-                        'message' => 'Pemilik QR code tidak ditemukan'
+                        'message' => 'Anda sudah melakukan scan masuk hari ini'
                     ], 400);
                 }
 
-                // Jika pemilik QR code bukan admin/petugas (yaitu mahasiswa/dosen), hanya admin/petugas yang bisa discan
-                if (!in_array($qrCodeOwner->user_type, ['admin', 'pegawai'])) {
+                // Cek apakah pengguna sudah memiliki masuk aktif (belum keluar)
+                $activeEntry = \App\Models\ParkingEntry::where('user_id', $user->id)
+                    ->whereDoesntHave('parkingExit')
+                    ->first();
+
+                if ($activeEntry) {
                     return response()->json([
                         'success' => false,
-                        'message' => 'Anda hanya dapat memindai QR code milik Anda sendiri'
+                        'message' => 'Anda masih memiliki catatan masuk parkir tanpa keluar'
                     ], 400);
                 }
-            }
 
-            // Tentukan user_id untuk entri parkir
-            // Jika QR code milik admin/petugas, maka entri dibuat untuk pengguna yang sedang login (karena mereka yang menggunakan QR code admin/petugas untuk masuk)
-            // Jika QR code umum (tanpa user_id), gunakan user yang sedang login
-            // Jika QR code milik pengguna tertentu dan bukan admin/petugas, maka hanya admin/petugas yang bisa scan dan entri tetap untuk pemilik QR code
-            if ($qrCodeModel->user_id) {
-                $qrCodeOwner = \App\Models\User::find($qrCodeModel->user_id);
-                if ($qrCodeOwner && (in_array($qrCodeOwner->user_type, ['admin', 'pegawai']) || $qrCodeOwner->hasRole(['Admin', 'Petugas']))) {
-                    // Jika QR code milik admin/petugas, entri dibuat untuk pengguna yang sedang login
-                    $entryUserId = $user->id;
-                } else {
-                    // Jika QR code milik pengguna biasa, entri dibuat untuk pemilik QR code (hanya bisa discan oleh admin/petugas)
-                    $entryUserId = $qrCodeModel->user_id;
-                }
-            } else {
-                // Jika QR code umum, entri dibuat untuk pengguna yang sedang login
-                $entryUserId = $user->id;
-            }
+                // Ambil data kendaraan dari pengguna jika tersedia
+                $vehicleType = $user->vehicle_type;
+                $vehiclePlateNumber = $user->vehicle_plate_number;
 
-            // Cek apakah pengguna yang QR codenya discan sudah memiliki masuk aktif (belum keluar)
-            $activeEntry = \App\Models\ParkingEntry::where('user_id', $entryUserId)
-                ->whereDoesntHave('parkingExit')
-                ->first();
+                // Buat catatan masuk parkir untuk pengguna yang sedang login
+                $parkingEntry = \App\Models\ParkingEntry::create([
+                    'user_id' => $user->id,
+                    'general_qr_code_id' => $generalQRCode->id, // Record which general QR code was used
+                    'entry_time' => Carbon::now(),
+                    'entry_location' => $request->entry_location ?? null,
+                    'vehicle_type' => $vehicleType,
+                    'vehicle_plate_number' => $vehiclePlateNumber,
+                ]);
 
-            if ($activeEntry) {
+                // Generate kode parkir berdasarkan ID parking entry yang baru dibuat
+                $kodeParkir = app(\App\Services\ParkingTransactionService::class)->generateKodeParkirFromEntry($parkingEntry);
+
+                // Perbarui kode parkir dengan format baru
+                $parkingEntry->update([
+                    'kode_parkir' => $kodeParkir
+                ]);
+
+
                 return response()->json([
-                    'success' => false,
-                    'message' => 'Pengguna masih memiliki catatan masuk parkir tanpa keluar'
-                ], 400);
+                    'success' => true,
+                    'message' => 'Catatan masuk berhasil direkam menggunakan QR code umum',
+                    'entry' => $parkingEntry
+                ]);
+            } else {
+                // Ini bukan general QR code, cek sebagai personal QR code
+                $qrCodeModel = $this->qrCodeService->validateQRCodeForEntry($request->qr_code);
+
+                if (!$qrCodeModel) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'QR code tidak valid atau telah kadaluarsa'
+                    ], 400);
+                }
+
+                // Periksa apakah QR code adalah untuk pengguna tertentu atau umum
+                // Jika QR code memiliki pemilik (bukan umum) dan bukan milik admin/petugas, maka hanya admin/petugas atau user dengan user_type pegawai yang bisa discan
+                if ($qrCodeModel->user_id && !$user->hasRole(['Admin', 'Petugas']) && $user->user_type !== 'pegawai') {
+                    // Ambil user pemilik QR code untuk mengecek apakah dia admin/petugas
+                    $qrCodeOwner = \App\Models\User::find($qrCodeModel->user_id);
+
+                    // Jika tidak bisa menemukan pemilik QR code, tolak
+                    if (!$qrCodeOwner) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Pemilik QR code tidak ditemukan'
+                        ], 400);
+                    }
+
+                    // Jika pemilik QR code bukan admin/petugas (yaitu mahasiswa/dosen), hanya admin/petugas yang bisa discan
+                    if (!in_array($qrCodeOwner->user_type, ['admin', 'pegawai'])) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Anda hanya dapat memindai QR code milik Anda sendiri'
+                        ], 400);
+                    }
+                }
+
+                // Tentukan user_id untuk entri parkir
+                // Jika QR code milik admin/petugas, maka entri dibuat untuk pengguna yang sedang login (karena mereka yang menggunakan QR code admin/petugas untuk masuk)
+                // Jika QR code umum (tanpa user_id), gunakan user yang sedang login
+                // Jika QR code milik pengguna tertentu dan bukan admin/petugas, maka hanya admin/petugas yang bisa scan dan entri tetap untuk pemilik QR code
+                if ($qrCodeModel->user_id) {
+                    $qrCodeOwner = \App\Models\User::find($qrCodeModel->user_id);
+                    if ($qrCodeOwner && (in_array($qrCodeOwner->user_type, ['admin', 'pegawai']) || $qrCodeOwner->hasRole(['Admin', 'Petugas']))) {
+                        // Jika QR code milik admin/petugas, entri dibuat untuk pengguna yang sedang login
+                        $entryUserId = $user->id;
+                    } else {
+                        // Jika QR code milik pengguna biasa, entri dibuat untuk pemilik QR code (hanya bisa discan oleh admin/petugas)
+                        $entryUserId = $qrCodeModel->user_id;
+                    }
+                } else {
+                    // Jika QR code umum (lama), entri dibuat untuk pengguna yang sedang login
+                    $entryUserId = $user->id;
+                }
+
+                // Cek apakah pengguna yang QR codenya discan sudah memiliki masuk aktif (belum keluar)
+                $activeEntry = \App\Models\ParkingEntry::where('user_id', $entryUserId)
+                    ->whereDoesntHave('parkingExit')
+                    ->first();
+
+                if ($activeEntry) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Pengguna masih memiliki catatan masuk parkir tanpa keluar'
+                    ], 400);
+                }
+
+                // Ambil data kendaraan dari pengguna jika tersedia
+                $userEntry = \App\Models\User::find($entryUserId);
+                $vehicleType = $userEntry ? $userEntry->vehicle_type : null;
+                $vehiclePlateNumber = $userEntry ? $userEntry->vehicle_plate_number : null;
+
+                // Buat catatan masuk parkir sementara tanpa kode parkir
+                $parkingEntry = \App\Models\ParkingEntry::create([
+                    'user_id' => $entryUserId,
+                    'qr_code_id' => $qrCodeModel->id,
+                    'entry_time' => Carbon::now(),
+                    'entry_location' => $request->entry_location ?? null,
+                    'vehicle_type' => $vehicleType,
+                    'vehicle_plate_number' => $vehiclePlateNumber,
+                ]);
+
+                // Generate kode parkir berdasarkan ID parking entry yang baru dibuat
+                $kodeParkir = app(\App\Services\ParkingTransactionService::class)->generateKodeParkirFromEntry($parkingEntry);
+
+                // Perbarui kode parkir dengan format baru
+                $parkingEntry->update([
+                    'kode_parkir' => $kodeParkir
+                ]);
+
+                // Tandai QR code sebagai digunakan (jika ini adalah QR code umum)
+                if (!$qrCodeModel->user_id) {
+                    $this->qrCodeService->markQRCodeAsUsed($qrCodeModel);
+                }
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Catatan masuk berhasil direkam',
+                    'entry' => $parkingEntry
+                ]);
             }
-
-            // Ambil data kendaraan dari pengguna jika tersedia
-            $userEntry = \App\Models\User::find($entryUserId);
-            $vehicleType = $userEntry ? $userEntry->vehicle_type : null;
-            $vehiclePlateNumber = $userEntry ? $userEntry->vehicle_plate_number : null;
-
-            // Buat catatan masuk parkir sementara tanpa kode parkir
-            $parkingEntry = \App\Models\ParkingEntry::create([
-                'user_id' => $entryUserId,
-                'qr_code_id' => $qrCodeModel->id,
-                'entry_time' => Carbon::now(),
-                'entry_location' => $request->entry_location ?? null,
-                'vehicle_type' => $vehicleType,
-                'vehicle_plate_number' => $vehiclePlateNumber,
-            ]);
-
-            // Generate kode parkir berdasarkan ID parking entry yang baru dibuat
-            $kodeParkir = app(\App\Services\ParkingTransactionService::class)->generateKodeParkirFromEntry($parkingEntry);
-
-            // Perbarui kode parkir dengan format baru
-            $parkingEntry->update([
-                'kode_parkir' => $kodeParkir
-            ]);
-
-            // Tandai QR code sebagai digunakan (jika ini adalah QR code umum)
-            if (!$qrCodeModel->user_id) {
-                $this->qrCodeService->markQRCodeAsUsed($qrCodeModel);
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Catatan masuk berhasil direkam',
-                'entry' => $parkingEntry
-            ]);
         } catch (\Exception $e) {
             Log::error('Error in scanEntry: ' . $e->getMessage(), [
                 'user_id' => Auth::id(),
@@ -298,98 +377,159 @@ class ParkingController extends Controller
 
             $user = Auth::user();
 
-            // Validasi QR code yang discan
-            $qrCodeModel = $this->qrCodeService->validateQRCodeForEntry($request->qr_code);
+            // Cek apakah ini general QR code (dari tabel general_qr_codes) atau personal QR code (dari tabel qr_codes)
+            $generalQRCode = $this->qrCodeService->validateGeneralQRCodeForEntry($request->qr_code);
 
-            if (!$qrCodeModel) {
+            if ($generalQRCode) {
+                // Ini adalah general QR code - bisa digunakan oleh semua user (mahasiswa, dosen, pegawai)
+                // Hanya bisa digunakan sekali per hari per pengguna
+
+                // Cek apakah pengguna sudah scan hari ini
+                $todayEntry = \App\Models\ParkingEntry::where('user_id', $user->id)
+                    ->whereDate('entry_time', today())
+                    ->first();
+
+                if ($todayEntry) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Anda sudah melakukan scan masuk hari ini'
+                    ], 400);
+                }
+
+                // Cek apakah pengguna sudah memiliki masuk aktif (belum keluar)
+                $activeEntry = \App\Models\ParkingEntry::where('user_id', $user->id)
+                    ->whereDoesntHave('parkingExit')
+                    ->first();
+
+                if ($activeEntry) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Anda masih memiliki catatan masuk parkir tanpa keluar'
+                    ], 400);
+                }
+
+                // Ambil data kendaraan dari pengguna jika tersedia
+                $vehicleType = $user->vehicle_type;
+                $vehiclePlateNumber = $user->vehicle_plate_number;
+
+                // Buat catatan masuk parkir untuk pengguna yang sedang login
+                $parkingEntry = \App\Models\ParkingEntry::create([
+                    'user_id' => $user->id,
+                    'general_qr_code_id' => $generalQRCode->id, // Record which general QR code was used
+                    'entry_time' => Carbon::now(),
+                    'entry_location' => $request->entry_location ?? null,
+                    'vehicle_type' => $vehicleType,
+                    'vehicle_plate_number' => $vehiclePlateNumber,
+                ]);
+
+                // Generate kode parkir berdasarkan ID parking entry yang baru dibuat
+                $kodeParkir = app(\App\Services\ParkingTransactionService::class)->generateKodeParkirFromEntry($parkingEntry);
+
+                // Perbarui kode parkir dengan format baru
+                $parkingEntry->update([
+                    'kode_parkir' => $kodeParkir
+                ]);
+
+
                 return response()->json([
-                    'success' => false,
-                    'message' => 'QR code tidak valid atau telah kadaluarsa'
-                ], 400);
-            }
-
-            // Jika QR code memiliki pemilik (bukan umum) dan bukan milik admin/petugas, maka hanya admin/petugas atau user dengan user_type pegawai yang bisa discan
-            if ($qrCodeModel->user_id && !$user->hasRole(['Admin', 'Petugas']) && $user->user_type !== 'pegawai') {
-                // Ambil user pemilik QR code untuk mengecek apakah dia admin/petugas
-                $qrCodeOwner = \App\Models\User::find($qrCodeModel->user_id);
-
-                // Jika tidak bisa menemukan pemilik QR code, tolak
-                if (!$qrCodeOwner) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Pemilik QR code tidak ditemukan'
-                    ], 400);
-                }
-
-                // Jika pemilik QR code bukan admin/petugas (yaitu mahasiswa/dosen), hanya admin/petugas yang bisa discan
-                if (!in_array($qrCodeOwner->user_type, ['admin', 'pegawai'])) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Anda hanya dapat memindai QR code milik Anda sendiri'
-                    ], 400);
-                }
-            }
-
-            // Tentukan user_id untuk entri parkir
-            if ($qrCodeModel->user_id) {
-                $qrCodeOwner = \App\Models\User::find($qrCodeModel->user_id);
-                if ($qrCodeOwner && (in_array($qrCodeOwner->user_type, ['admin', 'pegawai']) || $qrCodeOwner->hasRole(['Admin', 'Petugas']))) {
-                    // Jika QR code milik admin/petugas, entri dibuat untuk pengguna yang sedang login
-                    $entryUserId = $user->id;
-                } else {
-                    // Jika QR code milik pengguna biasa, entri dibuat untuk pemilik QR code (hanya bisa discan oleh admin/petugas)
-                    $entryUserId = $qrCodeModel->user_id;
-                }
+                    'success' => true,
+                    'message' => 'Catatan masuk berhasil direkam menggunakan QR code umum',
+                    'entry' => $parkingEntry
+                ]);
             } else {
-                // Jika QR code umum, entri dibuat untuk pengguna yang sedang login
-                $entryUserId = $user->id;
-            }
+                // Ini bukan general QR code, cek sebagai personal QR code
+                $qrCodeModel = $this->qrCodeService->validateQRCodeForEntry($request->qr_code);
 
-            // Cek apakah pengguna yang QR codenya discan sudah memiliki masuk aktif (belum keluar)
-            $activeEntry = \App\Models\ParkingEntry::where('user_id', $entryUserId)
-                ->whereDoesntHave('parkingExit')
-                ->first();
+                if (!$qrCodeModel) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'QR code tidak valid atau telah kadaluarsa'
+                    ], 400);
+                }
 
-            if ($activeEntry) {
+                // Jika QR code memiliki pemilik (bukan umum) dan bukan milik admin/petugas, maka hanya admin/petugas atau user dengan user_type pegawai yang bisa discan
+                if ($qrCodeModel->user_id && !$user->hasRole(['Admin', 'Petugas']) && $user->user_type !== 'pegawai') {
+                    // Ambil user pemilik QR code untuk mengecek apakah dia admin/petugas
+                    $qrCodeOwner = \App\Models\User::find($qrCodeModel->user_id);
+
+                    // Jika tidak bisa menemukan pemilik QR code, tolak
+                    if (!$qrCodeOwner) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Pemilik QR code tidak ditemukan'
+                        ], 400);
+                    }
+
+                    // Jika pemilik QR code bukan admin/petugas (yaitu mahasiswa/dosen), hanya admin/petugas yang bisa discan
+                    if (!in_array($qrCodeOwner->user_type, ['admin', 'pegawai'])) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Anda hanya dapat memindai QR code milik Anda sendiri'
+                        ], 400);
+                    }
+                }
+
+                // Tentukan user_id untuk entri parkir
+                if ($qrCodeModel->user_id) {
+                    $qrCodeOwner = \App\Models\User::find($qrCodeModel->user_id);
+                    if ($qrCodeOwner && (in_array($qrCodeOwner->user_type, ['admin', 'pegawai']) || $qrCodeOwner->hasRole(['Admin', 'Petugas']))) {
+                        // Jika QR code milik admin/petugas, entri dibuat untuk pengguna yang sedang login
+                        $entryUserId = $user->id;
+                    } else {
+                        // Jika QR code milik pengguna biasa, entri dibuat untuk pemilik QR code (hanya bisa discan oleh admin/petugas)
+                        $entryUserId = $qrCodeModel->user_id;
+                    }
+                } else {
+                    // Jika QR code umum (lama), entri dibuat untuk pengguna yang sedang login
+                    $entryUserId = $user->id;
+                }
+
+                // Cek apakah pengguna yang QR codenya discan sudah memiliki masuk aktif (belum keluar)
+                $activeEntry = \App\Models\ParkingEntry::where('user_id', $entryUserId)
+                    ->whereDoesntHave('parkingExit')
+                    ->first();
+
+                if ($activeEntry) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Pengguna masih memiliki catatan masuk parkir tanpa keluar'
+                    ], 400);
+                }
+
+                // Ambil data kendaraan dari pengguna jika tersedia
+                $userEntry = \App\Models\User::find($entryUserId);
+                $vehicleType = $userEntry ? $userEntry->vehicle_type : null;
+                $vehiclePlateNumber = $userEntry ? $userEntry->vehicle_plate_number : null;
+
+                // Buat catatan masuk parkir sementara tanpa kode parkir
+                $parkingEntry = \App\Models\ParkingEntry::create([
+                    'user_id' => $entryUserId,
+                    'qr_code_id' => $qrCodeModel->id,
+                    'entry_time' => Carbon::now(),
+                    'entry_location' => $request->entry_location ?? null,
+                    'vehicle_type' => $vehicleType,
+                    'vehicle_plate_number' => $vehiclePlateNumber,
+                ]);
+
+                // Generate kode parkir berdasarkan ID parking entry yang baru dibuat
+                $kodeParkir = app(\App\Services\ParkingTransactionService::class)->generateKodeParkirFromEntry($parkingEntry);
+
+                // Perbarui kode parkir dengan format baru
+                $parkingEntry->update([
+                    'kode_parkir' => $kodeParkir
+                ]);
+
+                // Tandai QR code sebagai digunakan (jika ini adalah QR code umum)
+                if (!$qrCodeModel->user_id) {
+                    $this->qrCodeService->markQRCodeAsUsed($qrCodeModel);
+                }
+
                 return response()->json([
-                    'success' => false,
-                    'message' => 'Pengguna masih memiliki catatan masuk parkir tanpa keluar'
-                ], 400);
+                    'success' => true,
+                    'message' => 'Catatan masuk berhasil direkam',
+                    'entry' => $parkingEntry
+                ]);
             }
-
-            // Ambil data kendaraan dari pengguna jika tersedia
-            $userEntry = \App\Models\User::find($entryUserId);
-            $vehicleType = $userEntry ? $userEntry->vehicle_type : null;
-            $vehiclePlateNumber = $userEntry ? $userEntry->vehicle_plate_number : null;
-
-            // Buat catatan masuk parkir sementara tanpa kode parkir
-            $parkingEntry = \App\Models\ParkingEntry::create([
-                'user_id' => $entryUserId,
-                'qr_code_id' => $qrCodeModel->id,
-                'entry_time' => Carbon::now(),
-                'entry_location' => $request->entry_location ?? null,
-                'vehicle_type' => $vehicleType,
-                'vehicle_plate_number' => $vehiclePlateNumber,
-            ]);
-
-            // Generate kode parkir berdasarkan ID parking entry yang baru dibuat
-            $kodeParkir = app(\App\Services\ParkingTransactionService::class)->generateKodeParkirFromEntry($parkingEntry);
-
-            // Perbarui kode parkir dengan format baru
-            $parkingEntry->update([
-                'kode_parkir' => $kodeParkir
-            ]);
-
-            // Tandai QR code sebagai digunakan (jika ini adalah QR code umum)
-            if (!$qrCodeModel->user_id) {
-                $this->qrCodeService->markQRCodeAsUsed($qrCodeModel);
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Catatan masuk berhasil direkam',
-                'entry' => $parkingEntry
-            ]);
         } catch (\Exception $e) {
             Log::error('Error in scanBarcode: ' . $e->getMessage(), [
                 'user_id' => Auth::id(),
@@ -846,40 +986,52 @@ class ParkingController extends Controller
                 'qr_code' => $request->qr_code
             ]);
 
-            // Validasi sebagai QR code
+            // Coba validasi sebagai QR code dari tabel qr_codes terlebih dahulu
             $qrCodeModel = $this->qrCodeService->validateQRCodeForEntry($request->qr_code);
 
-            if (!$qrCodeModel) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'QR code tidak valid atau telah kadaluarsa'
-                ], 400);
-            }
+            if ($qrCodeModel) {
+                // Ini adalah QR code dari tabel qr_codes, proses berdasarkan user_id dari QR code
+                if (!$qrCodeModel->user_id) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'QR code ini adalah QR code umum, bukan milik pengguna spesifik'
+                    ], 400);
+                }
 
-            // Pastikan ini adalah QR code milik pengguna (bukan umum)
-            if (!$qrCodeModel->user_id) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'QR code ini adalah QR code umum, bukan milik pengguna spesifik'
-                ], 400);
-            }
+                // Cari entri aktif milik PEMILIK QR code
+                $activeEntry = \App\Models\ParkingEntry::where('user_id', $qrCodeModel->user_id)
+                    ->whereDoesntHave('parkingExit')
+                    ->with('user') // Load user info untuk menampilkan nama
+                    ->first();
 
-            // Cari entri aktif milik PEMILIK QR code
-            $activeEntry = \App\Models\ParkingEntry::where('user_id', $qrCodeModel->user_id)
-                ->whereDoesntHave('parkingExit')
-                ->with('user') // Load user info untuk menampilkan nama
-                ->first();
+                if (!$activeEntry) {
+                    Log::info('Tidak ditemukan entri aktif untuk user_id: ' . $qrCodeModel->user_id, [
+                        'qr_code' => $request->qr_code,
+                        'qr_code_user_id' => $qrCodeModel->user_id
+                    ]);
 
-            if (!$activeEntry) {
-                Log::info('Tidak ditemukan entri aktif untuk user_id: ' . $qrCodeModel->user_id, [
-                    'qr_code' => $request->qr_code,
-                    'qr_code_user_id' => $qrCodeModel->user_id
-                ]);
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Pemilik QR code (' . $qrCodeModel->user_id . ') tidak memiliki catatan masuk aktif'
+                    ], 400);
+                }
+            } else {
+                // Bukan QR code dari tabel qr_codes, coba sebagai kode parkir
+                $activeEntry = \App\Models\ParkingEntry::where('kode_parkir', $request->qr_code)
+                    ->whereDoesntHave('parkingExit')
+                    ->with('user') // Load user info untuk menampilkan nama
+                    ->first();
 
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Pemilik QR code (' . $qrCodeModel->user_id . ') tidak memiliki catatan masuk aktif'
-                ], 400);
+                if (!$activeEntry) {
+                    Log::info('Tidak ditemukan entri aktif dengan kode_parkir: ' . $request->qr_code, [
+                        'qr_code' => $request->qr_code
+                    ]);
+
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Kode parkir tidak valid atau pengguna sudah keluar'
+                    ], 400);
+                }
             }
 
             // Proses pembayaran jika belum dilakukan
@@ -900,7 +1052,7 @@ class ParkingController extends Controller
                     [
                         'paid_amount' => $calculatedParkingFee,
                         'change' => 0,
-                        'note' => 'Diproses oleh admin/petugas saat scan QR code'
+                        'note' => 'Diproses oleh admin/petugas saat scan QR code atau kode parkir'
                     ]
                 );
             }
@@ -991,12 +1143,24 @@ class ParkingController extends Controller
             $qrCodeImage = $qrCodeService->generateQRCodeImage($parkingEntry->qrCode->code);
         }
 
-        // Generate QR code based on parking entry ID for tracking purposes
+        // Generate QR code based on kode_parkir for exit scanning (consistent with PDF)
         $entryIdQrCodeImage = '';
         try {
-            Log::info('Generating entry ID QR Code for entry: ' . $parkingEntry->id);
+            // Pastikan kode_parkir tersedia
+            if (empty($parkingEntry->kode_parkir)) {
+                // Jika kode_parkir kosong, generate dulu
+                $transactionService = app(\App\Services\ParkingTransactionService::class);
+                $kodeParkir = $transactionService->generateKodeParkirFromEntry($parkingEntry);
+
+                // Update entri dengan kode parkir yang baru dihasilkan
+                $parkingEntry->update(['kode_parkir' => $kodeParkir]);
+
+                Log::info('Generated kode_parkir for entry: ' . $parkingEntry->id . ', kode: ' . $kodeParkir);
+            }
+
+            Log::info('Generating entry ID QR Code for entry: ' . $parkingEntry->id . ' with kode_parkir: ' . $parkingEntry->kode_parkir);
             $qrCodeService = app(\App\Services\QRCodeGeneratorService::class);
-            $entryIdQrCodeImage = $qrCodeService->generateQRCodeSvg('ENTRY_ID:' . $parkingEntry->id, 150);
+            $entryIdQrCodeImage = $qrCodeService->generateQRCodeSvg($parkingEntry->kode_parkir, 150);
             Log::info('Successfully generated entry ID QR Code for entry: ' . $parkingEntry->id);
         } catch (\Exception $e) {
             Log::error('Error generating entry ID QR Code for entry ' . $parkingEntry->id . ': ' . $e->getMessage());

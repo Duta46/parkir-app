@@ -119,73 +119,72 @@
     </div>
 
     @if(Auth::user()->hasRole(['Admin', 'Petugas']))
-    <div class="row">
-        <!-- QR Code Display - only for admin/petugas -->
-        <div class="col-lg-6 mb-4">
+        <!-- General QR Code Display - only for admin/petugas -->
+        <div class="col-lg-12 mb-4">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">QR Code Saya</h5>
+                    <h5 class="card-title mb-0">QR Code Umum</h5>
                 </div>
                 <div class="card-body text-center">
                     <div class="mb-4 d-flex justify-content-center">
-                        @if($qrCodeModel ?? null)
-                            @if($qrCodeModel->expires_at->isToday())
-                                @if(strpos($qrCodeImage, '<svg') !== false)
+                        @if($generalQRCode ?? null)
+                            @if($generalQRCode->expires_at->isFuture())
+                                @php
+                                    $qrCodeService = app(\App\Services\QRCodeService::class);
+                                    $generalQRCodeImage = $qrCodeService->generateQRCodeImage($generalQRCode->code, 250);
+                                @endphp
+                                @if(strpos($generalQRCodeImage, '<svg') !== false)
                                     <div class="text-center">
-                                        <div id="qrCodeContainer">
-                                            {!! $qrCodeImage !!} <!-- Render SVG directly -->
+                                        <div id="generalQRCodeContainer">
+                                            {!! $generalQRCodeImage !!} <!-- Render SVG directly -->
                                         </div>
                                     </div>
                                 @else
                                     <div class="text-center">
-                                        <img id="qrCodeContainer"
-                                             src="data:image/png;base64,{{ base64_encode($qrCodeImage) }}"
-                                             alt="QR Code Anda"
+                                        <img id="generalQRCodeContainer"
+                                             src="data:image/png;base64,{{ base64_encode($generalQRCodeImage) }}"
+                                             alt="QR Code Umum"
                                              class="img-fluid border border-1 rounded"
                                              style="max-width: 250px; height: auto;">
                                     </div>
                                 @endif
                             @else
-                                <p class="text-warning">QR code saat ini sudah tidak berlaku. QR code baru akan tersedia setiap hari.</p>
+                                <p class="text-warning">QR code umum saat ini sudah tidak berlaku. QR code baru akan tersedia setiap hari.</p>
                             @endif
                         @else
-                            <p class="text-danger">Tidak ada QR code tersedia</p>
+                            <p class="text-danger">Tidak ada QR code umum tersedia untuk hari ini</p>
                         @endif
                     </div>
 
-                    @if($qrCodeModel ?? null)
-                        @if($qrCodeModel->expires_at->isToday())
+                    @if($generalQRCode ?? null)
+                        @if($generalQRCode->expires_at->isFuture())
                             <p class="mb-2">
-                                <small class="text-muted">Berlaku sampai: {{ $qrCodeModel->expires_at->format('H:i:s') }}</small>
+                                <small class="text-muted">Kode Batang: <strong>{{ $generalQRCode->code }}</strong></small>
+                            </p>
+                            <p class="mb-2">
+                                <small class="text-muted">Berlaku sampai: {{ $generalQRCode->expires_at->format('H:i:s') }}</small>
                             </p>
                             <p>
-                                <small class="text-muted">Dibuat pada: {{ $qrCodeModel->date->format('Y-m-d') }}</small>
+                                <small class="text-muted">Dibuat pada: {{ $generalQRCode->date->format('Y-m-d') }}</small>
                             </p>
-                            @if($qrCodeModel->is_used)
-                                <p class="text-danger fw-bold">QR Code ini telah digunakan</p>
-                            @else
-                                <p class="text-success fw-bold">QR Code aktif</p>
-                            @endif
+                            <p class="text-success fw-bold">QR Code Umum Aktif</p>
                         @else
-                            <p class="text-muted">QR code berlaku untuk tanggal: {{ $qrCodeModel->date->format('Y-m-d') }}</p>
+                            <p class="text-muted">QR code berlaku untuk tanggal: {{ $generalQRCode->date->format('Y-m-d') }}</p>
                         @endif
                     @endif
 
                     <div class="d-flex justify-content-center gap-2">
-                        <a href="{{ route('qr-code.show') }}" class="btn btn-outline-primary">
-                            Lihat QR Code Saya
-                        </a>
-
-                        @if($qrCodeModel ?? null && $qrCodeModel->expires_at->isToday())
-                            <button type="button" class="btn btn-outline-success" onclick="downloadQRCode()">
-                                <i class="fa-solid fa-download"></i> Download QR Code
+                        @if($generalQRCode ?? null && $generalQRCode->expires_at->isFuture())
+                            <button type="button" class="btn btn-outline-success" onclick="downloadGeneralQRCode()">
+                                <i class="fa-solid fa-download"></i> Download QR Code Umum
                             </button>
                         @endif
+
                     </div>
+
                 </div>
             </div>
         </div>
-    </div>
     @endif
 
 
@@ -350,32 +349,7 @@
         }, 5000);
     }
 
-    // Function to download QR code as PNG
-    function downloadQRCode() {
-        const qrCodeContainer = document.getElementById('qrCodeContainer');
 
-        if (!qrCodeContainer) {
-            console.error('QR Code container not found');
-            return;
-        }
-
-        // Check if the element is an SVG or an image
-        if (qrCodeContainer.tagName.toLowerCase() === 'svg') {
-            // Handle SVG download
-            downloadSVGAsPNG(qrCodeContainer);
-        } else if (qrCodeContainer.tagName.toLowerCase() === 'img') {
-            // Handle image download
-            downloadImageAsPNG(qrCodeContainer);
-        } else {
-            // If it's a div containing the SVG
-            const svgElement = qrCodeContainer.querySelector('svg');
-            if (svgElement) {
-                downloadSVGAsPNG(svgElement);
-            } else {
-                console.error('QR Code element not found');
-            }
-        }
-    }
 
     function downloadSVGAsPNG(svgElement) {
         const svgData = new XMLSerializer().serializeToString(svgElement);
@@ -421,6 +395,49 @@
         document.body.appendChild(downloadLink);
         downloadLink.click();
         document.body.removeChild(downloadLink);
+    }
+
+    // Function to download general QR code as PNG
+    function downloadGeneralQRCode() {
+        const generalQRCodeContainer = document.getElementById('generalQRCodeContainer');
+
+        if (!generalQRCodeContainer) {
+            console.error('General QR Code container not found');
+            return;
+        }
+
+        // Check if the element is an SVG or an image
+        if (generalQRCodeContainer.tagName.toLowerCase() === 'svg') {
+            // Handle SVG download
+            downloadSVGAsPNG(generalQRCodeContainer);
+        } else if (generalQRCodeContainer.tagName.toLowerCase() === 'img') {
+            // Handle image download
+            downloadImageAsPNG(generalQRCodeContainer);
+        } else {
+            // If it's a div containing the SVG
+            const svgElement = generalQRCodeContainer.querySelector('svg');
+            if (svgElement) {
+                downloadSVGAsPNG(svgElement);
+            } else {
+                console.error('General QR Code element not found');
+            }
+        }
+    }
+
+    // Function to debug general QR code (only for console logging)
+    function debugGeneralQRCode() {
+        const generalQRCodeContainer = document.getElementById('generalQRCodeContainer');
+        if (generalQRCodeContainer) {
+            console.log('General QR Code Container Info:', {
+                tagName: generalQRCodeContainer.tagName,
+                id: generalQRCodeContainer.id,
+                src: generalQRCodeContainer.src || 'N/A',
+                innerHTML: generalQRCodeContainer.innerHTML ? generalQRCodeContainer.innerHTML.substring(0, 100) + '...' : 'N/A',
+                attributes: Array.from(generalQRCodeContainer.attributes).map(attr => `${attr.name}="${attr.value}"`)
+            });
+        } else {
+            console.log('General QR Code container not found');
+        }
     }
 </script>
 @endsection

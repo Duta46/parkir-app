@@ -30,10 +30,7 @@
                     <div class="row">
                         <div class="col-md-8 offset-md-2">
                             <div class="text-center mb-4">
-                                <div id="qr-reader" style="width: 100%; max-width: 400px; margin: 0 auto; border: 1px solid #ccc; position: relative; overflow: hidden; background-color: #000;">
-                                    <div id="scan-indicator" style="position: absolute; top: 10px; left: 10px; background: rgba(0, 255, 0, 0.7); color: white; padding: 5px 10px; border-radius: 5px; font-size: 12px; z-index: 1000;">AUTO SCAN AKTIF</div>
-                                    <div id="scan-line" style="position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: #00ff00; animation: scan 2s infinite linear; z-index: 999;"></div>
-                                </div>
+                                <div id="qr-reader" style="width: 100%; max-width: 400px; margin: 0 auto; border: 1px solid #ccc; overflow: hidden; background-color: #000;"></div>
                                 <div id="qr-reader-buttons" class="mt-2">
                                     <button id="startButton" class="btn btn-success">Mulai Scan</button>
                                     <button id="stopButton" class="btn btn-warning" style="display: none;">Stop Scan</button>
@@ -49,9 +46,6 @@
                     </div>
 
                     <div class="text-center mb-3">
-                        <button id="debugCodeBtn" class="btn btn-outline-info me-2">
-                            Debug: Tampilkan Kode Scan
-                        </button>
                         <button id="uploadImageBtn" class="btn btn-outline-primary">
                             Atau Upload Gambar QR Code
                         </button>
@@ -73,14 +67,6 @@
                     <div id="routeUrls"
                          data-scan-barcode-url="{{ route('scan.barcode') }}"
                          data-csrf-token="{{ csrf_token() }}">
-                    </div>
-                    
-                    <!-- Debug area -->
-                    <div id="debugInfo" class="mt-3" style="display: none;">
-                        <div class="alert alert-secondary">
-                            <strong>Debug Info:</strong><br>
-                            <span id="debugContent"></span>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -238,19 +224,6 @@
                 }, 5000);
             }
 
-            // Fungsi untuk menampilkan informasi debug
-            function showDebugInfo(content) {
-                const debugInfo = document.getElementById('debugInfo');
-                const debugContent = document.getElementById('debugContent');
-                
-                if (debugContent) {
-                    debugContent.innerHTML = content;
-                }
-                
-                if (debugInfo) {
-                    debugInfo.style.display = 'block';
-                }
-            }
 
             // Fungsi untuk membuat request AJAX
             function makeScanRequest(qrCodeContent, source = 'camera') {
@@ -320,9 +293,10 @@
                     showLoading();
                 }
                 
-                showDebugInfo('Kode QR yang diproses: <strong>' + content + '</strong><br>' +
-                    'Tanggal saat ini: <strong>' + new Date().toLocaleDateString() + '</strong><br>' +
-                    'Sumber: <strong>' + (source === 'upload' ? 'Upload Gambar' : 'Kamera') + '</strong>');
+                console.log('Kode QR yang diproses:', content, {
+                    tanggal: new Date().toLocaleDateString(),
+                    sumber: source === 'upload' ? 'Upload Gambar' : 'Kamera'
+                });
 
                 console.log("Mengirim kode ke server:", content);
 
@@ -356,19 +330,6 @@
                     });
             }
 
-            // Event listener untuk tombol debug
-            const debugBtn = document.getElementById('debugCodeBtn');
-            if (debugBtn) {
-                debugBtn.addEventListener('click', function() {
-                    if (lastScanned) {
-                        showDebugInfo('Kode terakhir yang dipindai: <strong>' + lastScanned + '</strong><br>' +
-                            'Tanggal saat ini: <strong>' + new Date().toLocaleDateString() + '</strong><br>' +
-                            'Status pemrosesan: <strong>' + (isProcessing ? 'Sedang diproses' : 'Siap') + '</strong>');
-                    } else {
-                        showDebugInfo('Belum ada kode yang dipindai. Silakan lakukan scan terlebih dahulu.');
-                    }
-                });
-            }
 
             // Event listener untuk tombol upload gambar
             const uploadBtn = document.getElementById('uploadImageBtn');
@@ -459,9 +420,10 @@
                     lastScanned = decodedText;
                     
                     // Menampilkan kode yang dipindai untuk debugging
-                    showDebugInfo('Kode terakhir yang dipindai: <strong>' + decodedText + '</strong><br>' +
-                        'Tanggal saat ini: <strong>' + new Date().toLocaleDateString() + '</strong><br>' +
-                        'Status pemrosesan: <strong>Sedang diproses</strong>');
+                    console.log('Kode terakhir yang dipindai:', decodedText, {
+                        tanggal: new Date().toLocaleDateString(),
+                        status_pemrosesan: 'Sedang diproses'
+                    });
 
                     // Proses kode QR
                     handleScannedCode(decodedText, 'camera');

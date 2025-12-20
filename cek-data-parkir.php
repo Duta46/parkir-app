@@ -1,51 +1,38 @@
 <?php
-// cek-data-parkir.php
-require_once 'vendor/autoload.php';
+// This script checks if the QR code exists in the database
 
-// Set up Laravel app
-$app = require_once 'bootstrap/app.php';
-$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
-$kernel->bootstrap();
+require_once __DIR__ . '/vendor/autoload.php';
 
 use Illuminate\Support\Facades\DB;
 
-// Cek data entri parkir #1
-$entry = DB::table('parking_entries')
-    ->join('users', 'parking_entries.user_id', '=', 'users.id')
-    ->select('parking_entries.*', 'users.name', 'users.username')
-    ->where('parking_entries.id', 1)
-    ->first();
+// Initialize Laravel application
+$app = require_once __DIR__ . '/bootstrap/app.php';
 
-if ($entry) {
-    echo "Entri ID: " . $entry->id . "\n";
-    echo "User ID: " . $entry->user_id . "\n";
-    echo "Nama User: " . $entry->name . "\n";
-    echo "Username: " . $entry->username . "\n";
-    echo "Kode Parkir: " . $entry->kode_parkir . "\n";
-    echo "Waktu Masuk: " . $entry->entry_time . "\n";
-    
-    // Cek apakah sudah ada exit
-    $hasExit = DB::table('parking_exits')->where('parking_entry_id', $entry->id)->exists();
-    echo "Status: " . ($hasExit ? "Sudah Keluar" : "Belum Keluar") . "\n";
-} else {
-    echo "Entri dengan ID 1 tidak ditemukan\n";
-}
+$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
+$kernel->bootstrap();
 
-// Cek QR code terkait dengan entri parkir ini
-$qrCode = DB::table('qr_codes')
-    ->join('parking_entries', 'qr_codes.id', '=', 'parking_entries.qr_code_id')
-    ->select('qr_codes.*')
-    ->where('parking_entries.id', 1)
-    ->first();
+// Check if the QR code exists in general_qr_codes table
+$qrCode = DB::table('general_qr_codes')->where('code', 'GENERAL-201225-oObq4xs2')->first();
 
 if ($qrCode) {
-    echo "\nQR Code terkait dengan entri ID 1:\n";
-    echo "QR Code ID: " . $qrCode->id . "\n";
-    echo "QR Code: " . $qrCode->code . "\n";
-    echo "Tanggal: " . $qrCode->date . "\n";
-    echo "Expired at: " . $qrCode->expires_at . "\n";
-    echo "Is used: " . ($qrCode->is_used ? "Sudah" : "Belum") . "\n";
-    echo "User ID: " . ($qrCode->user_id ? $qrCode->user_id : "Umum") . "\n";
+    echo "QR Code GENERAL-201225-oObq4xs2 found in general_qr_codes table:\n";
+    echo "ID: " . $qrCode->id . "\n";
+    echo "Code: " . $qrCode->code . "\n";
+    echo "Date: " . $qrCode->date . "\n";
+    echo "Expires at: " . $qrCode->expires_at . "\n";
 } else {
-    echo "\nTidak ditemukan QR code terkait dengan entri ID 1\n";
+    echo "QR Code GENERAL-201225-oObq4xs2 NOT found in general_qr_codes table\n";
+    
+    // Check if it exists in qr_codes table
+    $qrCode2 = DB::table('qr_codes')->where('code', 'GENERAL-201225-oObq4xs2')->first();
+    if ($qrCode2) {
+        echo "QR Code found in qr_codes table instead:\n";
+        echo "ID: " . $qrCode2->id . "\n";
+        echo "Code: " . $qrCode2->code . "\n";
+        echo "Date: " . $qrCode2->date . "\n";
+        echo "User ID: " . ($qrCode2->user_id ?? 'NULL') . "\n";
+        echo "Is used: " . ($qrCode2->is_used ? 'Yes' : 'No') . "\n";
+    } else {
+        echo "QR Code not found in either table\n";
+    }
 }
