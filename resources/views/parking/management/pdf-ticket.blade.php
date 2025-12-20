@@ -4,98 +4,111 @@
     <meta charset="utf-8">
     <title>Tiket Parkir</title>
     <style>
+        @page {
+            margin: 0.2in;
+            size: A4;
+        }
         body {
             font-family: Arial, sans-serif;
-            margin: 15px;
+            margin: 0;
             padding: 0;
             font-size: 12px;
+            width: 100%;
+            height: 100%;
         }
         .container {
-            max-width: 100%;
-            margin: 0 auto;
-            border: 1px solid #000;
-            padding: 15px;
+            width: 95%;
+            max-width: 750px;
+            min-height: 98vh;
+            border: 3px solid #000;
+            padding: 20px;
             text-align: center;
+            box-sizing: border-box;
+            margin: 1vh auto 0;
         }
         .header {
             text-align: center;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
         }
         .header h1 {
             margin: 0;
-            font-size: 18px;
+            font-size: 22px;
             color: #333;
         }
         .info-section {
             text-align: left;
-            margin-bottom: 10px;
+            margin-bottom: 25px;
         }
         .info-section h3 {
             margin-top: 0;
-            margin-bottom: 8px;
-            color: #555;
-            border-bottom: 1px solid #ddd;
-            padding-bottom: 3px;
-            font-size: 14px;
+            margin-bottom: 12px;
+            color: #333;
+            border-bottom: 3px solid #000;
+            padding-bottom: 6px;
+            font-size: 18px;
+            font-weight: bold;
         }
         .info-row {
             display: flex;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
         }
         .info-label {
-            width: 110px;
+            width: 140px;
             font-weight: bold;
-            color: #666;
-            font-size: 11px;
+            color: #333;
+            font-size: 14px;
         }
         .info-value {
             flex: 1;
             color: #333;
-            font-size: 11px;
+            font-size: 14px;
         }
         .qr-container {
             display: flex;
             justify-content: space-around;
-            margin: 15px 0;
+            margin: 20px 0;
             text-align: center;
         }
         .qr-item {
             text-align: center;
         }
         .qr-item img {
-            border: 1px solid #ddd;
-            padding: 5px;
+            border: 3px solid #ddd;
+            padding: 15px;
             background: #fff;
-            max-width: 80px;
-            height: auto;
+            width: 160px;
+            height: 160px;
+            max-width: none;
         }
         .qr-label {
-            margin-top: 5px;
-            font-size: 10px;
+            margin-top: 8px;
+            font-size: 13px;
             color: #555;
         }
         .status-section {
-            margin-top: 10px;
-            padding: 10px;
+            margin-top: 15px;
+            padding: 12px;
             background-color: #f9f9f9;
-            border: 1px solid #ddd;
-            border-radius: 5px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
         }
         .footer {
             text-align: center;
-            margin-top: 10px;
-            padding-top: 8px;
-            border-top: 1px solid #ddd;
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 2px solid #ddd;
             color: #666;
-            font-size: 10px;
+            font-size: 13px;
         }
         .status-active {
             color: orange;
             font-weight: bold;
+            font-size: 15px;
         }
         .status-finished {
             color: green;
             font-weight: bold;
+            font-size: 15px;
         }
     </style>
 </head>
@@ -103,7 +116,7 @@
     <div class="container">
         <div class="header">
             <h1>Tiket Parkir</h1>
-            <p>Sistem Manajemen Parkir</p>
+            <p style="font-size: 15px;">Sistem Manajemen Parkir</p>
         </div>
 
         <div class="info-section">
@@ -138,9 +151,9 @@
                     @if($parkingEntry->parkingExit)
                         <span class="status-finished">Selesai</span>
                         <br>
-                        <span style="font-size: 10px;">Waktu Keluar: {{ $parkingEntry->parkingExit->exit_time->format('d/m/Y H:i:s') }}</span>
+                        <span style="font-size: 14px;">Waktu Keluar: {{ $parkingEntry->parkingExit->exit_time->format('d/m/Y H:i:s') }}</span>
                         <br>
-                        <span style="font-size: 10px;">Biaya: Rp{{ number_format($parkingEntry->parkingExit->parking_fee, 0, ',', '.') }}</span>
+                        <span style="font-size: 14px;">Biaya: Rp{{ number_format($parkingEntry->parkingExit->parking_fee, 0, ',', '.') }}</span>
                     @else
                         <span class="status-active">Aktif</span>
                     @endif
@@ -149,21 +162,21 @@
         </div>
 
         <div class="qr-code">
-            <h3>Barcode Keluar</h3>
+            <h3 style="font-size: 20px;">Barcode Keluar</h3>
             @if($qrCodeData)
                 <!-- QR Code for exit process (scan by admin/petugas) -->
-                <div style="text-align: center; margin: 10px 0; padding: 10px; border: 1px solid #ddd; background: white; display: inline-block;">
-                    <img src="data:image/png;base64,{{ base64_encode($qrCodeData) }}" alt="QR Code Keluar" style="max-width: 100px; height: 100px;" />
+                <div style="text-align: center; margin: 15px 0; padding: 15px; border: 3px solid #ddd; background: white; display: inline-block;">
+                    <img src="data:image/png;base64,{{ base64_encode($qrCodeData) }}" alt="QR Code Keluar" style="width: 160px; height: 160px;" />
                 </div>
-                <p style="margin-top: 5px; font-size: 11px; text-align: center;">Scan barcode ini untuk proses keluar parkir</p>
+                <p style="margin-top: 8px; font-size: 15px; text-align: center;">Scan barcode ini untuk proses keluar parkir</p>
             @else
-                <p style="font-size: 11px; text-align: center;">QR Code tidak tersedia</p>
+                <p style="font-size: 15px; text-align: center;">QR Code tidak tersedia</p>
             @endif
         </div>
 
         <div class="footer">
-            <p>Dicetak pada: {{ now()->format('d/m/Y H:i:s') }}</p>
-            <p>Sistem Manajemen Parkir &copy; {{ date('Y') }}</p>
+            <p style="font-size: 15px;">Dicetak pada: {{ now()->format('d/m/Y H:i:s') }}</p>
+            <p style="font-size: 15px;">Sistem Manajemen Parkir &copy; {{ date('Y') }}</p>
         </div>
     </div>
 </body>
