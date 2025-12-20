@@ -6,65 +6,96 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
+            margin: 15px;
+            padding: 0;
+            font-size: 12px;
         }
         .container {
-            max-width: 600px;
+            max-width: 100%;
             margin: 0 auto;
-            border: 2px solid #000;
-            padding: 20px;
+            border: 1px solid #000;
+            padding: 15px;
             text-align: center;
         }
         .header {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
         }
         .header h1 {
             margin: 0;
-            font-size: 24px;
+            font-size: 18px;
             color: #333;
         }
         .info-section {
             text-align: left;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
         }
         .info-section h3 {
             margin-top: 0;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             color: #555;
             border-bottom: 1px solid #ddd;
-            padding-bottom: 5px;
+            padding-bottom: 3px;
+            font-size: 14px;
         }
         .info-row {
             display: flex;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
         }
         .info-label {
-            width: 150px;
+            width: 110px;
             font-weight: bold;
             color: #666;
+            font-size: 11px;
         }
         .info-value {
             flex: 1;
             color: #333;
+            font-size: 11px;
         }
-        .qr-code {
+        .qr-container {
+            display: flex;
+            justify-content: space-around;
+            margin: 15px 0;
             text-align: center;
-            margin: 20px 0;
         }
-        .qr-code img {
+        .qr-item {
+            text-align: center;
+        }
+        .qr-item img {
             border: 1px solid #ddd;
-            padding: 10px;
+            padding: 5px;
             background: #fff;
+            max-width: 80px;
+            height: auto;
+        }
+        .qr-label {
+            margin-top: 5px;
+            font-size: 10px;
+            color: #555;
+        }
+        .status-section {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 5px;
         }
         .footer {
             text-align: center;
-            margin-top: 20px;
-            padding-top: 10px;
+            margin-top: 10px;
+            padding-top: 8px;
             border-top: 1px solid #ddd;
             color: #666;
-            font-size: 12px;
+            font-size: 10px;
+        }
+        .status-active {
+            color: orange;
+            font-weight: bold;
+        }
+        .status-finished {
+            color: green;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -102,35 +133,31 @@
                 <div class="info-value">{{ $parkingEntry->vehicle_plate_number ?: '-' }}</div>
             </div>
             <div class="info-row">
-                <div class="info-label">Lokasi Masuk:</div>
-                <div class="info-value">{{ $parkingEntry->entry_location ?: '-' }}</div>
-            </div>
-            <div class="info-row">
                 <div class="info-label">Status:</div>
                 <div class="info-value">
                     @if($parkingEntry->parkingExit)
-                        <span style="color: green; font-weight: bold;">Selesai</span>
+                        <span class="status-finished">Selesai</span>
                         <br>
-                        <span style="font-size: 12px;">Waktu Keluar: {{ $parkingEntry->parkingExit->exit_time->format('d/m/Y H:i:s') }}</span>
+                        <span style="font-size: 10px;">Waktu Keluar: {{ $parkingEntry->parkingExit->exit_time->format('d/m/Y H:i:s') }}</span>
                         <br>
-                        <span style="font-size: 12px;">Biaya: Rp{{ number_format($parkingEntry->parkingExit->parking_fee, 0, ',', '.') }}</span>
+                        <span style="font-size: 10px;">Biaya: Rp{{ number_format($parkingEntry->parkingExit->parking_fee, 0, ',', '.') }}</span>
                     @else
-                        <span style="color: orange; font-weight: bold;">Aktif</span>
+                        <span class="status-active">Aktif</span>
                     @endif
                 </div>
             </div>
         </div>
 
         <div class="qr-code">
-            <h3>Kode QR</h3>
+            <h3>Barcode Keluar</h3>
             @if($qrCodeData)
-                <!-- Simple SVG QR Code display -->
+                <!-- QR Code for exit process (scan by admin/petugas) -->
                 <div style="text-align: center; margin: 10px 0; padding: 10px; border: 1px solid #ddd; background: white; display: inline-block;">
-                    {!! $qrCodeData !!}
+                    <img src="data:image/png;base64,{{ base64_encode($qrCodeData) }}" alt="QR Code Keluar" style="max-width: 100px; height: 100px;" />
                 </div>
-                <p style="margin-top: 10px; font-size: 14px; text-align: center;">Scan untuk proses keluar parkir</p>
+                <p style="margin-top: 5px; font-size: 11px; text-align: center;">Scan barcode ini untuk proses keluar parkir</p>
             @else
-                <p>QR Code tidak tersedia</p>
+                <p style="font-size: 11px; text-align: center;">QR Code tidak tersedia</p>
             @endif
         </div>
 

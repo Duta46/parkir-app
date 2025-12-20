@@ -9,6 +9,7 @@ use App\Services\QRCodeService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class ParkingController extends Controller
 {
@@ -209,7 +210,7 @@ class ParkingController extends Controller
                 'entry' => $parkingEntry
             ]);
         } catch (\Exception $e) {
-            \Log::error('Error in scanEntry: ' . $e->getMessage(), [
+            Log::error('Error in scanEntry: ' . $e->getMessage(), [
                 'user_id' => Auth::id(),
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
@@ -241,7 +242,7 @@ class ParkingController extends Controller
 
             return view('parking.scan-barcode', compact('currentQRCode', 'qrCodeImage'));
         } catch (\Exception $e) {
-            \Log::error('Error in showScanPage: ' . $e->getMessage(), [
+            Log::error('Error in showScanPage: ' . $e->getMessage(), [
                 'user_id' => Auth::id(),
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
@@ -275,7 +276,7 @@ class ParkingController extends Controller
 
             return view('parking.admin-scan-barcode', compact('currentQRCode', 'qrCodeImage'));
         } catch (\Exception $e) {
-            \Log::error('Error in showAdminScanPage: ' . $e->getMessage(), [
+            Log::error('Error in showAdminScanPage: ' . $e->getMessage(), [
                 'user_id' => Auth::id(),
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
@@ -390,7 +391,7 @@ class ParkingController extends Controller
                 'entry' => $parkingEntry
             ]);
         } catch (\Exception $e) {
-            \Log::error('Error in scanBarcode: ' . $e->getMessage(), [
+            Log::error('Error in scanBarcode: ' . $e->getMessage(), [
                 'user_id' => Auth::id(),
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
@@ -561,7 +562,7 @@ class ParkingController extends Controller
                 'has_paid_today' => $transactionService->hasPaidToday($user->id),
             ]);
         } catch (\Exception $e) {
-            \Log::error('Error in scanExit: ' . $e->getMessage(), [
+            Log::error('Error in scanExit: ' . $e->getMessage(), [
                 'user_id' => Auth::id(),
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
@@ -640,7 +641,7 @@ class ParkingController extends Controller
                 'parking_fee' => $calculatedParkingFee,
             ]);
         } catch (\Exception $e) {
-            \Log::error('Error in adminUpdateExit: ' . $e->getMessage(), [
+            Log::error('Error in adminUpdateExit: ' . $e->getMessage(), [
                 'user_id' => Auth::id(),
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
@@ -816,7 +817,7 @@ class ParkingController extends Controller
             }
 
         } catch (\Exception $e) {
-            \Log::error('Error in adminScanBarcode: ' . $e->getMessage(), [
+            Log::error('Error in adminScanBarcode: ' . $e->getMessage(), [
                 'user_id' => Auth::id(),
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
@@ -840,7 +841,7 @@ class ParkingController extends Controller
                 'qr_code' => 'required|string',
             ]);
 
-            \Log::info('Memproses QR Code sebagai exit (berdasarkan user_id)', [
+            Log::info('Memproses QR Code sebagai exit (berdasarkan user_id)', [
                 'user_id' => Auth::id(),
                 'qr_code' => $request->qr_code
             ]);
@@ -870,11 +871,11 @@ class ParkingController extends Controller
                 ->first();
 
             if (!$activeEntry) {
-                \Log::info('Tidak ditemukan entri aktif untuk user_id: ' . $qrCodeModel->user_id, [
+                Log::info('Tidak ditemukan entri aktif untuk user_id: ' . $qrCodeModel->user_id, [
                     'qr_code' => $request->qr_code,
                     'qr_code_user_id' => $qrCodeModel->user_id
                 ]);
-                
+
                 return response()->json([
                     'success' => false,
                     'message' => 'Pemilik QR code (' . $qrCodeModel->user_id . ') tidak memiliki catatan masuk aktif'
@@ -923,7 +924,7 @@ class ParkingController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Error in processUserQrCodeAsExit: ' . $e->getMessage(), [
+            Log::error('Error in processUserQrCodeAsExit: ' . $e->getMessage(), [
                 'user_id' => Auth::id(),
                 'qr_code' => $request->qr_code ?? 'unknown',
                 'error' => $e->getMessage(),
@@ -990,7 +991,26 @@ class ParkingController extends Controller
             $qrCodeImage = $qrCodeService->generateQRCodeImage($parkingEntry->qrCode->code);
         }
 
-        return view('parking.detail', compact('parkingEntry', 'qrCodeImage'));
+        // Generate QR code based on parking entry ID for tracking purposes
+        $entryIdQrCodeImage = '';
+        try {
+            Log::info('Generating entry ID QR Code for entry: ' . $parkingEntry->id);
+            $qrCodeService = app(\App\Services\QRCodeGeneratorService::class);
+            $entryIdQrCodeImage = $qrCodeService->generateQRCodeSvg('ENTRY_ID:' . $parkingEntry->id, 150);
+            Log::info('Successfully generated entry ID QR Code for entry: ' . $parkingEntry->id);
+        } catch (\Exception $e) {
+            Log::error('Error generating entry ID QR Code for entry ' . $parkingEntry->id . ': ' . $e->getMessage());
+            // Fallback if generation fails
+            $entryIdQrCodeImage = '';
+        }
+
+        // In case the SVG doesn't render properly in browser, also encode as base64
+        $entryIdQrCodeBase64 = '';
+        if (!empty($entryIdQrCodeImage)) {
+            $entryIdQrCodeBase64 = base64_encode($entryIdQrCodeImage);
+        }
+
+        return view('parking.detail', compact('parkingEntry', 'qrCodeImage', 'entryIdQrCodeImage', 'entryIdQrCodeBase64'));
     }
 
     /**
@@ -1031,18 +1051,26 @@ class ParkingController extends Controller
             ->where('user_id', $user->id)
             ->findOrFail($id);
 
-        // Generate QR code for the entry if it has a QR code
+        // Generate QR code based on kode_parkir since it's always available
         $qrCodeData = null;
-        if ($parkingEntry->qrCode) {
+
+        if (!empty($parkingEntry->kode_parkir)) {
             try {
-                // Generate QR code as SVG first to avoid imagick dependency
-                // For some systems, even SVG might need imagick, so let's try direct generation
-                $qrCodeData = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')
-                    ->size(150)
-                    ->generate($parkingEntry->qrCode->code);
+                // Using Endroid QR code service for better PDF compatibility
+                $qrCodeService = app(\App\Services\QRCodeGeneratorService::class);
+                $qrCodeData = $qrCodeService->generateQRCodePng($parkingEntry->kode_parkir, 150);
             } catch (\Exception $e) {
-                // Fallback if generation fails
-                $qrCodeData = null;
+                Log::error('Error generating QR from kode_parkir with Endroid: ' . $e->getMessage());
+                // Fallback to SimpleSoftwareIO if Endroid fails
+                try {
+                    $qrCodeData = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
+                        ->size(150)
+                        ->generate($parkingEntry->kode_parkir);
+                } catch (\Exception $e2) {
+                    Log::error('Error generating QR from kode_parkir with SimpleSoftwareIO: ' . $e2->getMessage());
+                    // Fallback if generation fails
+                    $qrCodeData = null;
+                }
             }
         }
 

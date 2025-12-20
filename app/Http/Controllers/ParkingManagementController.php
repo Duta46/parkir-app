@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Services\ParkingTransactionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class ParkingManagementController extends Controller
 {
@@ -454,18 +455,26 @@ class ParkingManagementController extends Controller
 
         $parkingEntry = ParkingEntry::with(['user:id,name,username', 'qrCode:id,user_id,code,date', 'parkingExit:id,parking_entry_id,exit_time,parking_fee'])->findOrFail($id);
 
-        // Generate QR code for the entry if it has a QR code
+        // Generate QR code based on kode_parkir since it's always available
         $qrCodeData = null;
 
-        if ($parkingEntry->qrCode) {
+        if (!empty($parkingEntry->kode_parkir)) {
             try {
-                // Generate QR code as SVG first to avoid imagick dependency
-                $qrCodeData = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')
-                    ->size(150)
-                    ->generate($parkingEntry->qrCode->code);
+                // Using Endroid QR code service for better PDF compatibility
+                $qrCodeService = app(\App\Services\QRCodeGeneratorService::class);
+                $qrCodeData = $qrCodeService->generateQRCodePng($parkingEntry->kode_parkir, 150);
             } catch (\Exception $e) {
-                // Fallback to null if generation fails
-                $qrCodeData = null;
+                Log::error('Error generating QR from kode_parkir with Endroid: ' . $e->getMessage());
+                // Fallback to SimpleSoftwareIO if Endroid fails
+                try {
+                    $qrCodeData = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
+                        ->size(150)
+                        ->generate($parkingEntry->kode_parkir);
+                } catch (\Exception $e2) {
+                    Log::error('Error generating QR from kode_parkir with SimpleSoftwareIO: ' . $e2->getMessage());
+                    // Fallback if generation fails
+                    $qrCodeData = null;
+                }
             }
         }
 
