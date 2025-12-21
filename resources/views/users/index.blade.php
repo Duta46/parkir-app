@@ -55,15 +55,15 @@
                                     <td>
                                         <div class="dropdown">
                                             <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
-                                                <i class="ti ti-dots-vertical"></i>
+                                                <i class="fa-solid fa-ellipsis-vertical"></i>
                                             </button>
                                             <div class="dropdown-menu">
-                                                <a class="dropdown-item" href="{{ route('users.show', $user) }}"><i class="ti ti-eye me-1"></i> Lihat</a>
-                                                <a class="dropdown-item" href="{{ route('users.edit', $user) }}"><i class="ti ti-pencil me-1"></i> Edit</a>
+                                                <a class="dropdown-item" href="{{ route('users.show', $user) }}"><i class="fa-solid fa-eye me-1"></i> Lihat</a>
+                                                <a class="dropdown-item" href="{{ route('users.edit', $user) }}"><i class="fa-solid fa-pencil me-1"></i> Edit</a>
                                                 <form action="{{ route('users.destroy', $user) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus pengguna ini?')">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" class="dropdown-item text-danger"><i class="ti ti-trash me-1"></i> Hapus</button>
+                                                    <button type="submit" class="dropdown-item text-danger"><i class="fa-solid fa-trash me-1"></i> Hapus</button>
                                                 </form>
                                             </div>
                                         </div>
