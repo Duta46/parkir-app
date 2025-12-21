@@ -36,8 +36,8 @@ class SettingsController extends Controller
             // Delete the existing photo file if it exists
             if (auth()->user()->profile_photo_path) {
                 $filePath = str_replace('storage/', 'public/', auth()->user()->profile_photo_path);
-                if (\Storage::exists($filePath)) {
-                    \Storage::delete($filePath);
+                if (\Storage::disk('public')->exists($filePath)) {
+                    \Storage::disk('public')->delete($filePath);
                 }
             }
             // Remove the photo path from the database
@@ -52,7 +52,7 @@ class SettingsController extends Controller
 
             $photo = $request->file('profile_photo');
             $filename = time() . '_' . auth()->user()->id . '.' . $photo->getClientOriginalExtension();
-            $path = $photo->storeAs('public/profile_photos', $filename);
+            $path = $photo->storeAs('profile_photos', $filename, 'public');
             $request->user()->profile_photo_path = 'storage/profile_photos/' . $filename;
         }
 
