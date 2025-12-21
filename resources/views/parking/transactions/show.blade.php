@@ -148,10 +148,10 @@
                 <div class="card-body">
                     <div class="d-grid gap-2">
                         <a href="{{ route('parking.management.show', $transaction->parkingEntry->id) }}" class="btn btn-primary">
-                            <i class="ti ti-car"></i> Lihat Info Parkir
+                            <i class="fa-solid fa-car"></i> Lihat Info Parkir
                         </a>
                         <a href="{{ route('parking.transactions.index') }}" class="btn btn-secondary">
-                            <i class="ti ti-list-check"></i> Lihat Semua Transaksi
+                            <i class="fa-solid fa-list-check"></i> Lihat Semua Transaksi
                         </a>
                     </div>
                 </div>
@@ -173,7 +173,7 @@
                             </select>
                         </div>
                         <button type="submit" class="btn btn-primary w-100">
-                            <i class="ti ti-save"></i> Simpan Perubahan
+                            <i class="fa-solid fa-save"></i> Simpan Perubahan
                         </button>
                     </form>
                 </div>

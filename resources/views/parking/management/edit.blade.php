@@ -14,7 +14,7 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">Edit Entri Parkir #{{ $parkingEntry->id }}</h5>
                     <a href="{{ route('parking.management.show', $parkingEntry->id) }}" class="btn btn-secondary">
-                        <i class="ti ti-arrow-left"></i> Kembali
+                        <i class="fa-solid fa-arrow-left"></i> Kembali
                     </a>
                 </div>
                 <div class="card-body">

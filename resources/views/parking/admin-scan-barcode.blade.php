@@ -92,7 +92,7 @@
                     <p id="userBarcodeText" class="fw-bold"></p>
 
                     <div class="alert alert-success">
-                        <i class="ti ti-check-circle"></i>
+                        <i class="fa-solid fa-check-circle"></i>
                         <strong>Status:</strong> Anda telah berhasil masuk ke area parkir. Gunakan barcode di atas saat ingin keluar.
                     </div>
                 </div>
@@ -264,9 +264,9 @@
                     // Update status camera
                     const status = document.getElementById('cameraStatus');
                     if(status && source === 'camera') {
-                        status.innerHTML = '<p class="text-success"><i class="ti ti-check-circle"></i> Berhasil scan! Kamera siap untuk scan berikutnya.</p>';
+                        status.innerHTML = '<p class="text-success"><i class="fa-solid fa-check-circle"></i> Berhasil scan! Kamera siap untuk scan berikutnya.</p>';
                     } else if (status && source === 'upload') {
-                        status.innerHTML = '<p class="text-success"><i class="ti ti-check-circle"></i> Berhasil scan dari gambar! Kamera siap untuk scan berikutnya.</p>';
+                        status.innerHTML = '<p class="text-success"><i class="fa-solid fa-check-circle"></i> Berhasil scan dari gambar! Kamera siap untuk scan berikutnya.</p>';
                     }
                 } else {
                     showScanStatus(data.message, 'error');
@@ -397,7 +397,7 @@
                 
                 if (startButton) startButton.style.display = 'none';
                 if (stopButton) stopButton.style.display = 'inline-block';
-                if (cameraStatus) cameraStatus.innerHTML = '<p class="text-info"><i class="ti ti-loader"></i> Menginisialisasi kamera...</p>';
+                if (cameraStatus) cameraStatus.innerHTML = '<p class="text-info"><i class="fa-solid fa-loader"></i> Menginisialisasi kamera...</p>';
 
                 // Inisialisasi Html5Qrcode
                 html5QrCode = new Html5Qrcode("qr-reader");
@@ -442,24 +442,24 @@
                             onSuccess,
                             onFailure
                         ).then(() => {
-                            if (cameraStatus) cameraStatus.innerHTML = '<p class="text-success"><i class="ti ti-check-circle"></i> Kamera aktif. Arahkan ke barcode pengguna...</p>';
+                            if (cameraStatus) cameraStatus.innerHTML = '<p class="text-success"><i class="fa-solid fa-check-circle"></i> Kamera aktif. Arahkan ke barcode pengguna...</p>';
                         }).catch(err => {
                             console.error("Gagal memulai kamera: ", err);
-                            if (cameraStatus) cameraStatus.innerHTML = '<p class="text-danger"><i class="ti ti-x"></i> Gagal memulai kamera: ' + err + '</p>';
+                            if (cameraStatus) cameraStatus.innerHTML = '<p class="text-danger"><i class="fa-solid fa-x"></i> Gagal memulai kamera: ' + err + '</p>';
                             isScanning = false;
                             if (startButton) startButton.style.display = 'inline-block';
                             if (stopButton) stopButton.style.display = 'none';
                         });
                     } else {
                         console.error("Kamera tidak ditemukan");
-                        if (cameraStatus) cameraStatus.innerHTML = '<p class="text-danger"><i class="ti ti-x"></i> Kamera tidak ditemukan</p>';
+                        if (cameraStatus) cameraStatus.innerHTML = '<p class="text-danger"><i class="fa-solid fa-x"></i> Kamera tidak ditemukan</p>';
                         isScanning = false;
                         if (startButton) startButton.style.display = 'inline-block';
                         if (stopButton) stopButton.style.display = 'none';
                     }
                 }).catch(err => {
                     console.error("Gagal mengakses kamera: ", err);
-                    if (cameraStatus) cameraStatus.innerHTML = '<p class="text-danger"><i class="ti ti-x"></i> Gagal mengakses kamera: ' + err + '</p>';
+                    if (cameraStatus) cameraStatus.innerHTML = '<p class="text-danger"><i class="fa-solid fa-x"></i> Gagal mengakses kamera: ' + err + '</p>';
                     isScanning = false;
                     if (startButton) startButton.style.display = 'inline-block';
                     if (stopButton) stopButton.style.display = 'none';
@@ -478,7 +478,7 @@
                     
                     if (startButton) startButton.style.display = 'inline-block';
                     if (stopButton) stopButton.style.display = 'none';
-                    if (cameraStatus) cameraStatus.innerHTML = '<p class="text-muted"><i class="ti ti-camera"></i> Kamera dihentikan. Klik "Mulai Scan" untuk memulai kembali...</p>';
+                    if (cameraStatus) cameraStatus.innerHTML = '<p class="text-muted"><i class="fa-solid fa-camera"></i> Kamera dihentikan. Klik "Mulai Scan" untuk memulai kembali...</p>';
                 }).catch(err => {
                     console.error('Gagal menghentikan kamera: ', err);
                     isScanning = false;

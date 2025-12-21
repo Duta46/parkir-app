@@ -112,14 +112,14 @@
                     </p>
                     @if(!empty($entryIdQrCodeImage))
                     <button type="button" class="btn btn-outline-primary mt-2" onclick="downloadEntryIdQRCode()">
-                        <i class="ti ti-download"></i> Download QR Code ID
+                        <i class="fa-solid fa-download"></i> Download QR Code ID
                     </button>
                     @endif
 
                     <!-- Tambahkan informasi scanning -->
                     @if(!$parkingEntry->parkingExit)
                     <div class="alert alert-info mt-3" style="font-size: 0.85rem;">
-                        <i class="ti ti-info-circle"></i> Gunakan QR Code ini untuk scan saat keluar parkir
+                        <i class="fa-solid fa-info-circle"></i> Gunakan QR Code ini untuk scan saat keluar parkir
                     </div>
                     @endif
                 </div>
@@ -131,19 +131,19 @@
                 </div>
                 <div class="card-body">
                     <a href="{{ route('parking.history') }}" class="btn btn-secondary w-100 mb-2">
-                        <i class="ti ti-arrow-left"></i> Kembali ke Riwayat
+                        <i class="fa-solid fa-arrow-left"></i> Kembali ke Riwayat
                     </a>
                     <a href="{{ route('parking.history.download-pdf', $parkingEntry->id) }}" class="btn btn-info w-100 mb-2">
-                        <i class="ti ti-download"></i> Download PDF Tiket
+                        <i class="fa-solid fa-download"></i> Download PDF Tiket
                     </a>
                     <a href="{{ route('scan.barcode.page') }}" class="btn btn-primary w-100">
-                        <i class="ti ti-scan"></i> Scan Barcode
+                        <i class="fa-solid fa-scan"></i> Scan Barcode
                     </a>
 
                     @if(!$parkingEntry->parkingExit)
                     <div class="mt-2">
                         <span class="text-muted" style="font-size: 0.8rem;">
-                            <i class="ti ti-arrow-right"></i> Gunakan QR Code ID Entri di atas saat scan keluar parkir
+                            <i class="fa-solid fa-arrow-right"></i> Gunakan QR Code ID Entri di atas saat scan keluar parkir
                         </span>
                     </div>
                     @endif
