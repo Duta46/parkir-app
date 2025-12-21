@@ -266,33 +266,33 @@
                                     </button>
                                     <div class="dropdown-menu">
                                         <a class="dropdown-item" href="{{ route('parking.management.show', $entry->id) }}">
-                                            <i class="ti ti-eye me-1"></i> Detail
+                                            <i class="fa-solid fa-eye me-1"></i> Detail
                                         </a>
                                         @if(!$entry->parkingExit)
                                         <a class="dropdown-item" href="{{ route('parking.transactions.payment.form', $entry->id) }}">
-                                            <i class="ti ti-currency-riyal me-1"></i> Bayar
+                                            <i class="fa-solid fa-currency-riyal me-1"></i> Bayar
                                         </a>
                                         <form method="POST" action="{{ route('parking.management.addExit', $entry->id) }}" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menambahkan catatan keluar untuk entri ini?')">
                                             @csrf
                                             <input type="hidden" name="exit_time" value="{{ now()->format('Y-m-d H:i:s') }}">
                                             <!-- Biaya akan dihitung otomatis berdasarkan kebijakan 1x bayar per hari -->
                                             <button type="submit" class="dropdown-item">
-                                                <i class="ti ti-logout me-1"></i> Keluar
+                                                <i class="fa-solid fa-logout me-1"></i> Keluar
                                             </button>
                                         </form>
                                         <a class="dropdown-item" href="{{ route('parking.management.edit', $entry->id) }}">
-                                            <i class="ti ti-pencil me-1"></i> Edit
+                                            <i class="fa-solid fa-pencil me-1"></i> Edit
                                         </a>
                                         @else
                                         <a class="dropdown-item" href="{{ route('parking.management.edit', $entry->id) }}">
-                                            <i class="ti ti-pencil me-1"></i> Edit
+                                            <i class="fa-solid fa-pencil me-1"></i> Edit
                                         </a>
                                         @endif
                                         <form method="POST" action="{{ route('parking.management.destroy', $entry->id) }}" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus entri ini?')">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="dropdown-item text-danger">
-                                                <i class="ti ti-trash me-1"></i> Hapus
+                                                <i class="fa-solid fa-trash me-1"></i> Hapus
                                             </button>
                                         </form>
                                     </div>

@@ -41,7 +41,7 @@
 
                         <button id="refreshQrBtn"
                                 class="btn btn-primary mb-3">
-                            <i class="ti ti-refresh"></i> Perbarui QR Code
+                            <i class="fa-solid fa-refresh"></i> Perbarui QR Code
                         </button>
                     @endif
                 </div>
@@ -53,7 +53,7 @@
 <script>
     document.getElementById('refreshQrBtn').addEventListener('click', function() {
         this.disabled = true;
-        this.innerHTML = '<i class="ti ti-loader ti-spin ti-xs"></i> Menghasilkan...';
+        this.innerHTML = '<i class="fa-solid fa-loader fa-spin fa-xs"></i> Menghasilkan...';
 
         fetch('{{ route("qr-code.generate") }}', {
             method: 'POST',
@@ -70,14 +70,14 @@
             } else {
                 alert('Gagal membuat QR code: ' + (data.message || 'Kesalahan tidak diketahui'));
                 this.disabled = false;
-                this.innerHTML = '<i class="ti ti-refresh"></i> Perbarui QR Code';
+                this.innerHTML = '<i class="fa-solid fa-refresh"></i> Perbarui QR Code';
             }
         })
         .catch(error => {
             console.error('Kesalahan:', error);
             alert('Terjadi kesalahan saat membuat QR code');
             this.disabled = false;
-            this.innerHTML = '<i class="ti ti-refresh"></i> Perbarui QR Code';
+            this.innerHTML = '<i class="fa-solid fa-refresh"></i> Perbarui QR Code';
         });
     });
 </script>

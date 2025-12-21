@@ -63,33 +63,33 @@
                             <td>
                                 <div class="dropdown">
                                     <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
-                                        <i class="ti ti-dots-vertical"></i>
+                                        <i class="menu-icon fa-solid fa-ellipsis-vertical"></i>
                                     </button>
                                     <div class="dropdown-menu">
                                         <a class="dropdown-item" href="{{ route('parking.management.show', $entry->id) }}">
-                                            <i class="ti ti-eye me-1"></i> Detail
+                                            <i class="fa-solid fa-eye me-1"></i> Detail
                                         </a>
                                         <a class="dropdown-item" href="{{ route('parking.management.download-pdf', $entry->id) }}" target="_blank">
-                                            <i class="ti ti-download me-1"></i> Download PDF
+                                            <i class="fa-solid fa-download me-1"></i> Download PDF
                                         </a>
                                         @if(!$entry->parkingExit)
                                         <!-- Tombol Keluar dengan Modal -->
                                         <a class="dropdown-item" href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#exitModal{{ $entry->id }}">
-                                            <i class="ti ti-door-exit me-1"></i> Keluar
+                                            <i class="fa-solid fa-right-from-bracket me-1"></i> Keluar
                                         </a>
                                         <a class="dropdown-item" href="{{ route('parking.management.edit', $entry->id) }}">
-                                            <i class="ti ti-pencil me-1"></i> Edit
+                                            <i class="fa-solid fa-pencil me-1"></i> Edit
                                         </a>
                                         @else
                                         <a class="dropdown-item" href="{{ route('parking.management.edit', $entry->id) }}">
-                                            <i class="ti ti-pencil me-1"></i> Edit
+                                            <i class="fa-solid fa-pencil me-1"></i> Edit
                                         </a>
                                         @endif
                                         <form method="POST" action="{{ route('parking.management.destroy', $entry->id) }}" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus entri ini?')">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="dropdown-item text-danger">
-                                                <i class="ti ti-trash me-1"></i> Hapus
+                                                <i class="fa-solid fa-trash me-1"></i> Hapus
                                             </button>
                                         </form>
                                     </div>
@@ -129,7 +129,7 @@
                                                         <!-- Biaya akan dihitung otomatis di controller berdasarkan kebijakan 1x bayar per hari -->
                                                     </div>
                                                     <div class="alert alert-info">
-                                                        <i class="ti ti-info-circle"></i> Biaya akan dihitung otomatis berdasarkan kebijakan (Rp 1.000 pertama, gratis jika sudah bayar hari ini)
+                                                        <i class="fa-solid fa-info-circle"></i> Biaya akan dihitung otomatis berdasarkan kebijakan (Rp 1.000 pertama, gratis jika sudah bayar hari ini)
                                                     </div>
                                                 </div>
                                                 <div class="modal-footer">

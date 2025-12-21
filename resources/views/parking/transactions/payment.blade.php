@@ -14,7 +14,7 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">Form Pembayaran untuk Kode Parkir: {{ $parkingEntry->kode_parkir }}</h5>
                     <a href="{{ route('parking.management.show', $parkingEntry->id) }}" class="btn btn-secondary">
-                        <i class="ti ti-arrow-left"></i> Kembali
+                        <i class="fa-solid fa-arrow-left"></i> Kembali
                     </a>
                 </div>
                 <div class="card-body">
@@ -105,7 +105,7 @@
                                 Batal
                             </a>
                             <button type="submit" class="btn btn-success">
-                                <i class="ti ti-currency-riyal"></i> Proses Pembayaran
+                                <i class="fa-solid fa-currency-riyal"></i> Proses Pembayaran
                             </button>
                         </div>
                     </form>

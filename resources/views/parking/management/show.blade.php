@@ -202,11 +202,11 @@
                         <strong>{{ $parkingEntry->kode_parkir }}</strong>
                     </p>
                     <button type="button" class="btn btn-outline-primary mt-2" onclick="downloadEntryIdQRCode()">
-                        <i class="ti ti-download"></i> Download QR Code ID
+                        <i class="fa-solid fa-download"></i> Download QR Code ID
                     </button>
                     <div class="mt-2">
                         <span class="text-muted" style="font-size: 0.8rem;">
-                            <i class="ti ti-info-circle"></i> Gunakan QR Code ini untuk scan saat keluar parkir
+                            <i class="fa-solid fa-info-circle"></i> Gunakan QR Code ini untuk scan saat keluar parkir
                         </span>
                     </div>
                 </div>
@@ -220,28 +220,28 @@
                     <div class="d-grid gap-2">
                         @if(!$parkingEntry->parkingExit)
                         <a href="{{ route('parking.transactions.payment.form', $parkingEntry->id) }}" class="btn btn-success">
-                            <i class="ti ti-currency-riyal"></i> Proses Pembayaran
+                            <i class="fa-solid fa-currency-riyal"></i> Proses Pembayaran
                         </a>
                         <form method="POST" action="{{ route('parking.management.addExit', $parkingEntry->id) }}" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menambahkan catatan keluar untuk entri ini?')">
                             @csrf
                             <input type="hidden" name="exit_time" value="{{ now()->format('Y-m-d H:i:s') }}">
                             <!-- Biaya akan dihitung otomatis berdasarkan kebijakan 1x bayar per hari -->
                             <button type="submit" class="btn btn-warning w-100">
-                                <i class="ti ti-logout"></i> Tambah Keluar
+                                <i class="fa-solid fa-logout"></i> Tambah Keluar
                             </button>
                         </form>
                         @endif
                         <a href="{{ route('parking.management.download-pdf', $parkingEntry->id) }}" class="btn btn-info">
-                            <i class="ti ti-download"></i> Download PDF
+                            <i class="fa-solid fa-download"></i> Download PDF
                         </a>
                         <a href="{{ route('parking.management.edit', $parkingEntry->id) }}" class="btn btn-primary">
-                            <i class="ti ti-pencil"></i> Edit Data
+                            <i class="fa-solid fa-pencil"></i> Edit Data
                         </a>
                         <form method="POST" action="{{ route('parking.management.destroy', $parkingEntry->id) }}" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus entri ini?')">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="btn btn-danger">
-                                <i class="ti ti-trash"></i> Hapus Data
+                                <i class="fa-solid fa-trash"></i> Hapus Data
                             </button>
                         </form>
                     </div>
