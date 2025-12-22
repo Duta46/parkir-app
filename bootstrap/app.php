@@ -14,6 +14,8 @@ return Application::configure(basePath: dirname(__DIR__))
         __DIR__.'/../app/Console/Commands/*.php',
     ])
     ->withMiddleware(function (Middleware $middleware): void {
+        // $middleware->append(\App\Http\Middleware\SessionDebugMiddleware::class);
+
         $middleware->alias([
             'user.type' => \App\Http\Middleware\UserTypeMiddleware::class,
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,

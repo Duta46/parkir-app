@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class SettingsController extends Controller
@@ -24,42 +27,90 @@ class SettingsController extends Controller
      */
     public function update(Request $request): RedirectResponse
     {
-        // Validate only the fields that are not file uploads first
+        Log::info('SettingsController@update called');
+        Log::info('Auth status at start: ' . (Auth::check() ? 'logged in' : 'not logged in'));
+        Log::info('Session ID at start: ' . session()->getId());
+        Log::info('Has remove_photo: ' . ($request->has('remove_photo') ? 'yes' : 'no'));
+        Log::info('Remove photo value: ' . ($request->input('remove_photo') ?? 'null'));
+
+        // Validasi
         $request->validate([
             'name' => ['string', 'max:255'],
             'vehicle_type' => ['nullable', 'string', 'in:Motor'],
             'vehicle_plate_number' => ['nullable', 'string', 'max:20'],
         ]);
 
-        // Handle profile photo removal if requested
+        $user = $request->user();
+        Log::info('User ID: ' . $user->id);
+
+        // Hapus foto jika diminta
         if ($request->has('remove_photo') && $request->input('remove_photo') == '1') {
-            // Delete the existing photo file if it exists
-            if (auth()->user()->profile_photo_path) {
-                $filePath = str_replace('storage/', 'public/', auth()->user()->profile_photo_path);
-                if (\Storage::disk('public')->exists($filePath)) {
-                    \Storage::disk('public')->delete($filePath);
+            Log::info('Processing photo removal');
+
+            if ($user->profile_photo_path) {
+                Log::info('Photo path exists: ' . $user->profile_photo_path);
+                $filePath = str_replace('storage/', 'public/', $user->profile_photo_path);
+
+                if (Storage::disk('public')->exists($filePath)) {
+                    Log::info('File exists, attempting to delete: ' . $filePath);
+                    Storage::disk('public')->delete($filePath);
+                    Log::info('File deleted successfully');
+                } else {
+                    Log::info('File does not exist in storage: ' . $filePath);
                 }
             }
-            // Remove the photo path from the database
-            $request->user()->profile_photo_path = null;
+
+            $user->profile_photo_path = null;
+            Log::info('Profile photo path set to null');
         }
-        // Handle profile photo upload if present
+        // Upload foto jika ada
         elseif ($request->hasFile('profile_photo')) {
-            // Validate the profile photo separately
             $request->validate([
-                'profile_photo' => ['nullable', 'image', 'max:2048'], // Max 2MB
+                'profile_photo' => ['nullable', 'image', 'max:2048'],
             ]);
 
             $photo = $request->file('profile_photo');
-            $filename = time() . '_' . auth()->user()->id . '.' . $photo->getClientOriginalExtension();
+            $filename = time() . '_' . $user->id . '.' . $photo->getClientOriginalExtension();
             $path = $photo->storeAs('profile_photos', $filename, 'public');
-            $request->user()->profile_photo_path = 'storage/profile_photos/' . $filename;
+            $user->profile_photo_path = 'storage/profile_photos/' . $filename;
         }
 
-        // Fill in the validated data (excluding photo which was handled separately)
-        $request->user()->fill($request->only(['name', 'vehicle_type', 'vehicle_plate_number']));
-        $request->user()->save();
+        // Update data lainnya
+        $user->fill($request->only(['name', 'vehicle_type', 'vehicle_plate_number']));
+        $user->save();
+        Log::info('User saved to database');
+
+        // Perbarui otentikasi setelah update
+        if (Auth::check()) {
+            Log::info('Refreshing auth session');
+            Auth::setUser($user);
+        }
+
+        Log::info('Session ID at end: ' . session()->getId());
+        Log::info('Auth status at end: ' . (Auth::check() ? 'logged in' : 'not logged in'));
+        Log::info('SettingsController@update completed');
 
         return Redirect::route('settings')->with('status', 'profile-updated');
+    }
+
+    /**
+     * Delete the user's profile photo.
+     */
+    public function destroyPhoto(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+
+        if ($user->profile_photo_path) {
+            $filePath = str_replace('storage/', 'public/', $user->profile_photo_path);
+
+            if (Storage::disk('public')->exists($filePath)) {
+                Storage::disk('public')->delete($filePath);
+            }
+        }
+
+        $user->profile_photo_path = null;
+        $user->save();
+
+        return Redirect::route('settings')->with('status', 'photo-deleted');
     }
 }

@@ -31,7 +31,8 @@
                                         accept="image/png, image/jpeg, image/jpg" />
                                 </label>
                                 @if(auth()->user()->profile_photo_path)
-                                <button type="button" class="btn btn-label-secondary account-image-reset mb-4" id="removePhotoBtn">
+                                <button type="button" class="btn btn-label-secondary account-image-reset mb-4"
+                                    onclick="confirmAndSubmitForm('deletePhotoForm')">
                                     <i class="icon-base ti tabler-trash d-block d-sm-none"></i>
                                     <span class="d-none d-sm-block">Hapus Foto</span>
                                 </button>
@@ -109,25 +110,6 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const removePhotoBtn = document.getElementById('removePhotoBtn');
-
-            if (removePhotoBtn) {
-                removePhotoBtn.addEventListener('click', function() {
-                    // Create a hidden input field to indicate photo removal
-                    const removeInput = document.createElement('input');
-                    removeInput.type = 'hidden';
-                    removeInput.name = 'remove_photo';
-                    removeInput.value = '1';
-
-                    // Find the form and append the hidden input
-                    const form = document.querySelector('form');
-                    form.appendChild(removeInput);
-
-                    // Submit the form
-                    form.submit();
-                });
-            }
-
             // Handle file input change to preview image
             const profilePhotoInput = document.getElementById('profile_photo');
             const uploadedAvatar = document.getElementById('uploadedAvatar');
@@ -168,6 +150,18 @@
                 }
             }
         });
+
+        function confirmAndSubmitForm(formId) {
+            if (confirm('Apakah Anda yakin ingin menghapus foto profil?')) {
+                document.getElementById(formId).submit();
+            }
+        }
     </script>
+
+    <!-- Hidden form for deleting photo -->
+    <form id="deletePhotoForm" method="POST" action="{{ route('settings.photo.destroy') }}" style="display: none;">
+        @csrf
+        @method('DELETE')
+    </form>
 </div>
 @endsection
