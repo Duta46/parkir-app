@@ -41,8 +41,8 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'username' => 'required|string|unique:users,username',
             'password' => 'required|string|min:8|confirmed',
-            'user_type' => 'required|in:mahasiswa,dosen,pegawai,admin',
-            'role' => 'required|in:Pengguna,Admin',
+            'user_type' => 'required|in:mahasiswa,dosen,pegawai,petugas,admin',
+            'role' => 'required|in:Pengguna,Petugas,Admin',
             'identity_number' => 'nullable|string|max:255',
             'vehicle_type' => 'nullable|string|in:motor,car',
             'vehicle_plate_number' => 'nullable|string|max:20',
@@ -52,12 +52,26 @@ class UserController extends Controller
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
+        // Jika role adalah Admin atau Petugas, atur user_type secara otomatis
+        $userType = $request->user_type;
+        if ($request->role === 'Admin') {
+            $userType = 'admin';
+        } elseif ($request->role === 'Petugas') {
+            $userType = 'petugas';
+        }
+
+        // Jika role adalah Admin atau Petugas, identity_number tidak perlu disimpan atau diisi null
+        $identityNumber = $request->identity_number;
+        if ($request->role === 'Admin' || $request->role === 'Petugas') {
+            $identityNumber = null;
+        }
+
         $user = User::create([
             'name' => $request->name,
             'username' => $request->username,
             'password' => Hash::make($request->password),
-            'user_type' => $request->user_type,
-            'identity_number' => $request->identity_number,
+            'user_type' => $userType,
+            'identity_number' => $identityNumber,
             'vehicle_type' => $request->vehicle_type ?? null,
             'vehicle_plate_number' => $request->vehicle_plate_number ?? null,
         ]);
@@ -65,6 +79,8 @@ class UserController extends Controller
         // Assign role based on the request
         if ($request->role === 'Admin') {
             $user->assignRole('Admin');
+        } elseif ($request->role === 'Petugas') {
+            $user->assignRole('Petugas');
         } else {
             $user->assignRole('Pengguna');
         }
@@ -96,8 +112,8 @@ class UserController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'username' => 'required|string|unique:users,username,' . $user->id,
-            'user_type' => 'required|in:mahasiswa,dosen,pegawai,admin',
-            'role' => 'required|in:Pengguna,Admin',
+            'user_type' => 'required|in:mahasiswa,dosen,pegawai,petugas,admin',
+            'role' => 'required|in:Pengguna,Petugas,Admin',
             'identity_number' => 'nullable|string|max:255',
             'password' => 'nullable|string|min:8|confirmed',
             'vehicle_type' => 'nullable|string|in:motor,car',
@@ -108,11 +124,25 @@ class UserController extends Controller
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
+        // Jika role adalah Admin atau Petugas, atur user_type secara otomatis
+        $userType = $request->user_type;
+        if ($request->role === 'Admin') {
+            $userType = 'admin';
+        } elseif ($request->role === 'Petugas') {
+            $userType = 'petugas';
+        }
+
+        // Jika role adalah Admin atau Petugas, identity_number tidak perlu disimpan atau diisi null
+        $identityNumber = $request->identity_number;
+        if ($request->role === 'Admin' || $request->role === 'Petugas') {
+            $identityNumber = null;
+        }
+
         $user->update([
             'name' => $request->name,
             'username' => $request->username,
-            'user_type' => $request->user_type,
-            'identity_number' => $request->identity_number,
+            'user_type' => $userType,
+            'identity_number' => $identityNumber,
             'vehicle_type' => $request->vehicle_type ?? null,
             'vehicle_plate_number' => $request->vehicle_plate_number ?? null,
         ]);
@@ -121,6 +151,8 @@ class UserController extends Controller
         $user->syncRoles([]);
         if ($request->role === 'Admin') {
             $user->assignRole('Admin');
+        } elseif ($request->role === 'Petugas') {
+            $user->assignRole('Petugas');
         } else {
             $user->assignRole('Pengguna');
         }

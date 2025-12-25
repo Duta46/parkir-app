@@ -5,12 +5,14 @@ namespace Database\Seeders;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use App\Models\User;
 
 class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::table('users')->insert([
+        // Create users first
+        $users = [
             [
                 'name'            => 'Admin',
                 'username'        => 'admin',
@@ -25,7 +27,7 @@ class UserSeeder extends Seeder
                 'username'        => 'petugas',
                 'password'        => bcrypt('password'),
                 'identity_number' => null,
-                'user_type'       => 'pegawai',
+                'user_type'       => 'petugas',
                 'vehicle_type'    => null,
                 'vehicle_plate_number' => null,
             ],
@@ -47,6 +49,19 @@ class UserSeeder extends Seeder
                 'vehicle_type'    => 'motor',
                 'vehicle_plate_number' => 'N 1234 AB',
             ],
-        ]);
+        ];
+
+        foreach ($users as $userData) {
+            $user = User::create($userData);
+
+            // Assign roles based on user data
+            if ($userData['username'] === 'admin') {
+                $user->assignRole('Admin');
+            } elseif ($userData['username'] === 'petugas') {
+                $user->assignRole('Petugas');
+            } else {
+                $user->assignRole('Pengguna');
+            }
+        }
     }
 }

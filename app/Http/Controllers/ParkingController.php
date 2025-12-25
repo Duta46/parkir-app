@@ -1178,14 +1178,14 @@ class ParkingController extends Controller
     }
 
     /**
-     * Tampilkan detail data parkir untuk admin
+     * Tampilkan detail data parkir untuk admin dan petugas
      */
     public function showParkingDetail($id)
     {
         $user = Auth::user();
 
-        // Hanya admin yang bisa mengakses ini
-        if (!$user->hasRole('Admin')) {
+        // Hanya admin dan petugas yang bisa mengakses ini
+        if (!$user->hasRole(['Admin', 'Petugas'])) {
             abort(403, 'Anda tidak memiliki akses ke halaman ini.');
         }
 

@@ -24,52 +24,9 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="username" class="form-label">Nama Pengguna</label>
+                                    <label for="username" class="form-label" id="username_label">Nama Pengguna</label>
                                     <input type="text" class="form-control @error('username') is-invalid @enderror" id="username" name="username" value="{{ old('username') }}" required>
                                     @error('username')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="password" class="form-label">Kata Sandi</label>
-                                    <input type="password" class="form-control @error('password') is-invalid @enderror" id="password" name="password" required>
-                                    @error('password')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="user_type" class="form-label">Tipe Pengguna</label>
-                                    <select class="form-control @error('user_type') is-invalid @enderror" id="user_type" name="user_type" required>
-                                        <option value="">Pilih Tipe Pengguna</option>
-                                        <option value="mahasiswa" {{ old('user_type') == 'mahasiswa' ? 'selected' : '' }}>Mahasiswa</option>
-                                        <option value="dosen" {{ old('user_type') == 'dosen' ? 'selected' : '' }}>Dosen</option>
-                                        <option value="pegawai" {{ old('user_type') == 'pegawai' ? 'selected' : '' }}>Pegawai</option>
-                                        <option value="admin" {{ old('user_type') == 'admin' ? 'selected' : '' }}>Admin</option>
-                                    </select>
-                                    @error('user_type')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="password_confirmation" class="form-label">Konfirmasi Kata Sandi</label>
-                                    <input type="password" class="form-control" id="password_confirmation" name="password_confirmation" required>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="identity_number" class="form-label">Nomor Identitas (NIM/NIP/NUP)</label>
-                                    <input type="text" class="form-control @error('identity_number') is-invalid @enderror" id="identity_number" name="identity_number" value="{{ old('identity_number') }}">
-                                    @error('identity_number')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -82,9 +39,19 @@
                                     <select class="form-control @error('role') is-invalid @enderror" id="role" name="role" required>
                                         <option value="">Pilih Peran</option>
                                         <option value="Pengguna" {{ old('role') == 'Pengguna' ? 'selected' : '' }}>Pengguna</option>
+                                        <option value="Petugas" {{ old('role') == 'Petugas' ? 'selected' : '' }}>Petugas</option>
                                         <option value="Admin" {{ old('role') == 'Admin' ? 'selected' : '' }}>Admin</option>
                                     </select>
                                     @error('role')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-6" id="identity_number_field">
+                                <div class="mb-3">
+                                    <label for="identity_number" class="form-label">Nomor Identitas (NIM/NIP/NUP)</label>
+                                    <input type="text" class="form-control @error('identity_number') is-invalid @enderror" id="identity_number" name="identity_number" value="{{ old('identity_number') }}">
+                                    @error('identity_number')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -112,6 +79,41 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="password" class="form-label">Kata Sandi</label>
+                                    <input type="password" class="form-control @error('password') is-invalid @enderror" id="password" name="password" required>
+                                    @error('password')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="password_confirmation" class="form-label">Konfirmasi Kata Sandi</label>
+                                    <input type="password" class="form-control" id="password_confirmation" name="password_confirmation" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6" id="user_type_field">
+                                <div class="mb-3">
+                                    <label for="user_type" class="form-label">Tipe Pengguna</label>
+                                    <select class="form-control @error('user_type') is-invalid @enderror" id="user_type" name="user_type" required>
+                                        <option value="">Pilih Tipe Pengguna</option>
+                                        <option value="mahasiswa" {{ old('user_type') == 'mahasiswa' ? 'selected' : '' }}>Mahasiswa</option>
+                                        <option value="dosen" {{ old('user_type') == 'dosen' ? 'selected' : '' }}>Dosen</option>
+                                        <option value="pegawai" {{ old('user_type') == 'pegawai' ? 'selected' : '' }}>Pegawai</option>
+                                        <option value="petugas" {{ old('user_type') == 'petugas' ? 'selected' : '' }}>Petugas</option>
+                                        <option value="admin" {{ old('user_type') == 'admin' ? 'selected' : '' }}>Admin</option>
+                                    </select>
+                                    @error('user_type')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
                         <div class="mt-3">
                             <button type="submit" class="btn btn-primary">Tambah Pengguna</button>
                             <a href="{{ route('users.index') }}" class="btn btn-secondary">Batal</a>
@@ -122,4 +124,53 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const roleSelect = document.getElementById('role');
+    const userTypeField = document.getElementById('user_type_field');
+    const userTypeSelect = document.getElementById('user_type');
+    const identityNumberField = document.getElementById('identity_number_field');
+    const usernameLabel = document.getElementById('username_label');
+
+    function toggleFields() {
+        if (roleSelect && userTypeSelect) {
+            const selectedRole = roleSelect.value;
+
+            // Jika role adalah Admin atau Petugas, sembunyikan user_type dan identity_number, serta atur nilai default
+            if (selectedRole === 'Admin' || selectedRole === 'Petugas') {
+                userTypeField.style.display = 'none';
+                identityNumberField.style.display = 'none';
+
+                // Atur nilai default berdasarkan role
+                if (selectedRole === 'Admin') {
+                    userTypeSelect.value = 'admin';
+                } else if (selectedRole === 'Petugas') {
+                    userTypeSelect.value = 'petugas'; // Tipe pengguna untuk petugas parkir
+                }
+
+                // Ubah label nama pengguna menjadi Username
+                usernameLabel.textContent = 'Username';
+            } else {
+                userTypeField.style.display = 'block';
+                identityNumberField.style.display = 'block';
+
+                // Kembalikan label ke Nama Pengguna
+                usernameLabel.textContent = 'Nama Pengguna';
+            }
+        }
+    }
+
+    // Tambahkan event listener untuk perubahan role
+    if (roleSelect) {
+        roleSelect.addEventListener('change', toggleFields);
+
+        // Panggil fungsi saat halaman dimuat untuk menangani nilai default
+        toggleFields();
+    }
+});
+</script>
+@endpush
+
 @endsection

@@ -61,14 +61,14 @@ class CustomLoginController extends Controller
      */
     private function isValidLoginMethod($user, $loginField)
     {
-        // Untuk tipe mahasiswa, dosen, dan pegawai, hanya boleh login dengan identity_number atau nim_nip_nup
+        // Untuk tipe mahasiswa, dosen, dan pegawai, hanya boleh login dengan identity_number
         if (in_array($user->user_type, ['mahasiswa', 'dosen', 'pegawai'])) {
-            // Harus login dengan identity_number atau nim_nip_nup
-            return ($user->identity_number === $loginField || $user->nim_nip_nup === $loginField);
+            // Harus login dengan identity_number
+            return ($user->identity_number === $loginField);
         }
 
-        // Untuk tipe admin, bisa login dengan username
-        if ($user->user_type === 'admin') {
+        // Untuk tipe admin dan petugas, bisa login dengan username
+        if (in_array($user->user_type, ['admin', 'petugas'])) {
             return $user->username === $loginField;
         }
 
@@ -102,12 +102,6 @@ class CustomLoginController extends Controller
     {
         // Cari berdasarkan identity_number (NIP/NUP/NIM)
         $user = User::where('identity_number', $loginField)->first();
-        if ($user) {
-            return $user;
-        }
-
-        // Cari berdasarkan NIM/NIP/NUP lama
-        $user = User::where('nim_nip_nup', $loginField)->first();
         if ($user) {
             return $user;
         }
