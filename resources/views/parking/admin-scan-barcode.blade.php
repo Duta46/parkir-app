@@ -164,11 +164,14 @@
 @push('scripts')
     <!-- Load Html5Qrcode Library -->
     <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <!-- Load jsQR Library for image processing -->
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             let html5QrCode;
             let lastScanned = ""; // Menyimpan QR Code terakhir agar tidak diproses dua kali
             let isProcessing = false; // Flag untuk mencegah pemrosesan ganda
+            let isProcessingImage = false; // Flag untuk pemrosesan gambar
             let isScanning = false; // Flag untuk status scanning
 
             // Menampilkan loading saat scan QR Code
@@ -372,12 +375,41 @@
                     const fileInput = document.getElementById('qrImageUpload');
                     if (fileInput.files.length > 0) {
                         const file = fileInput.files[0];
+
                         const reader = new FileReader();
                         reader.onload = function(event) {
-                            // Kita perlu mengimplementasi OCR atau library untuk membaca QR code dari gambar
-                            // Untuk sekarang, kita hanya menampilkan error bahwa fitur ini perlu pengembangan lebih lanjut
-                            console.log('Fitur membaca QR code dari gambar memerlukan pengembangan tambahan untuk mengimplementasi OCR atau library pembaca gambar QR.');
-                        }
+                            const image = new Image();
+                            image.onload = function() {
+                                const canvas = document.createElement('canvas');
+                                const context = canvas.getContext('2d');
+
+                                canvas.width = image.width;
+                                canvas.height = image.height;
+                                context.drawImage(image, 0, 0, image.width, image.height);
+
+                                const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+
+                                // Use jsQR to decode the QR code
+                                const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+                                if (code) {
+                                    handleScannedCode(code.data, 'upload');
+                                } else {
+                                    showScanStatus('Tidak ditemukan kode QR dalam gambar.', 'error');
+                                }
+                            };
+
+                            image.onerror = function() {
+                                showScanStatus('Gagal memuat gambar. Pastikan file adalah gambar yang valid.', 'error');
+                            };
+
+                            image.src = event.target.result;
+                        };
+
+                        reader.onerror = function() {
+                            showScanStatus('Gagal membaca file gambar.', 'error');
+                        };
+
                         reader.readAsDataURL(file);
                     } else {
                         showScanStatus('Silakan pilih file gambar terlebih dahulu.', 'error');
