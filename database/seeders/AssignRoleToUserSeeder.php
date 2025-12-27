@@ -19,7 +19,7 @@ class AssignRoleToUserSeeder extends Seeder
 
         $petugas = \App\Models\User::where('username', 'petugas')->first();
         if ($petugas) {
-            $petugas->assignRole('Pengguna');
+            $petugas->assignRole('Petugas');
         }
 
         $user = \App\Models\User::where('username', 'rendi')->first();

@@ -71,8 +71,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/{id}/download-pdf', [ParkingManagementController::class, 'downloadPDF'])->name('parking.management.download-pdf');
     });
 
-    // Parking transaction routes for admin
-    Route::prefix('parking-transactions')->middleware('role:Admin')->group(function() {
+    // Parking transaction routes for admin and petugas
+    Route::prefix('parking-transactions')->middleware('role:Admin|Petugas')->group(function() {
         Route::get('/', [ParkingTransactionController::class, 'index'])->name('parking.transactions.index');
         Route::get('/{id}', [ParkingTransactionController::class, 'show'])->name('parking.transactions.show');
         Route::get('/{id}/payment', [ParkingTransactionController::class, 'showPaymentForm'])->name('parking.transactions.payment.form');

@@ -23,8 +23,8 @@ class ParkingTransactionController extends Controller
      */
     public function index()
     {
-        // Hanya untuk admin
-        if (!Auth::user()->hasRole('Admin')) {
+        // Hanya untuk admin dan petugas
+        if (!Auth::user()->hasRole('Admin') && !Auth::user()->hasRole('Petugas')) {
             abort(403, 'Anda tidak memiliki akses ke halaman ini.');
         }
 
@@ -40,7 +40,7 @@ class ParkingTransactionController extends Controller
      */
     public function showPaymentForm($id)
     {
-        if (!Auth::user()->hasRole('Admin')) {
+        if (!Auth::user()->hasRole('Admin') && !Auth::user()->hasRole('Petugas')) {
             abort(403, 'Anda tidak memiliki akses ke halaman ini.');
         }
 
@@ -67,7 +67,7 @@ class ParkingTransactionController extends Controller
      */
     public function processCashPayment(Request $request, $id)
     {
-        if (!Auth::user()->hasRole('Admin')) {
+        if (!Auth::user()->hasRole('Admin') && !Auth::user()->hasRole('Petugas')) {
             abort(403, 'Anda tidak memiliki akses ke halaman ini.');
         }
 
@@ -106,7 +106,7 @@ class ParkingTransactionController extends Controller
      */
     public function show($id)
     {
-        if (!Auth::user()->hasRole('Admin')) {
+        if (!Auth::user()->hasRole('Admin') && !Auth::user()->hasRole('Petugas')) {
             abort(403, 'Anda tidak memiliki akses ke halaman ini.');
         }
 
