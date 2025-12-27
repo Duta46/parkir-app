@@ -68,7 +68,7 @@
                         </div>
                     </div>
 
-                    <div class="mt-4">
+                    {{-- <div class="mt-4">
                         <h6>Informasi Tambahan</h6>
                         <div class="row">
                             <div class="col-md-12">
@@ -79,7 +79,7 @@
                                 @endif
                             </div>
                         </div>
-                    </div>
+                    </div> --}}
                 </div>
             </div>
         </div>

@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
         __DIR__.'/../app/Console/Commands/*.php',
     ])
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->prepend(\App\Http\Middleware\TrustProxies::class);
         // $middleware->append(\App\Http\Middleware\SessionDebugMiddleware::class);
 
         $middleware->alias([

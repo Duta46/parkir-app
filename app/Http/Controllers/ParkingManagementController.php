@@ -34,6 +34,7 @@ class ParkingManagementController extends Controller
     private function buildSearchQuery(array $filters)
     {
         $query = ParkingEntry::with(['user:id,name,username', 'qrCode:id,user_id,code,date', 'parkingExit:id,parking_entry_id,exit_time,parking_fee'])
+            ->where('vehicle_type', 'Motor') // Filter hanya untuk kendaraan jenis motor
             ->orderBy('entry_time', 'desc');
 
         if (!empty($filters['user_id'])) {
@@ -52,8 +53,11 @@ class ParkingManagementController extends Controller
             }
         }
 
-        if (!empty($filters['vehicle_type'])) {
-            $query->where('vehicle_type', $filters['vehicle_type']);
+        // Kita tetap memungkinkan filter vehicle_type untuk kompatibilitas,
+        // tetapi hanya 'Motor' yang akan menghasilkan hasil
+        if (!empty($filters['vehicle_type']) && $filters['vehicle_type'] !== 'Motor') {
+            // Jika filter bukan motor, kembalikan query kosong
+            $query = $query->whereRaw('1 = 0'); // Query yang tidak akan mengembalikan hasil
         }
 
         return $query;
@@ -67,30 +71,43 @@ class ParkingManagementController extends Controller
         $this->authorizeAdmin();
 
         // Ambil data parkir terbaru dengan eager loading terbatas untuk mencegah N+1
+        // Filter hanya untuk kendaraan jenis motor
         $parkingEntries = ParkingEntry::with(['user:id,name,username', 'qrCode:id,user_id,code,date', 'parkingExit:id,parking_entry_id,exit_time,parking_fee'])
+            ->where('vehicle_type', 'Motor')
             ->orderBy('entry_time', 'desc')
             ->paginate(15);
 
         // Ambil statistik dengan query yang dioptimalkan
         $totalUsers = User::count();
-        $activeEntries = ParkingEntry::whereDoesntHave('parkingExit')->count();
-        $totalExitsToday = ParkingExit::whereDate('exit_time', today()->toDateString())->count();
-        $totalRevenueToday = ParkingExit::whereDate('exit_time', today()->toDateString())
-            ->sum('parking_fee');
+        $activeEntries = ParkingEntry::whereDoesntHave('parkingExit')->where('vehicle_type', 'Motor')->count();
+        $totalExitsToday = ParkingExit::join('parking_entries', 'parking_exits.parking_entry_id', '=', 'parking_entries.id')
+            ->whereDate('parking_exits.exit_time', today()->toDateString())
+            ->where('parking_entries.vehicle_type', 'Motor')
+            ->count();
+        $totalRevenueToday = ParkingExit::join('parking_entries', 'parking_exits.parking_entry_id', '=', 'parking_entries.id')
+            ->whereDate('parking_exits.exit_time', today()->toDateString())
+            ->where('parking_entries.vehicle_type', 'Motor')
+            ->sum('parking_exits.parking_fee');
 
         // Statistik tambahan
         $today = today();
-        $totalEntriesToday = ParkingEntry::whereDate('entry_time', $today->toDateString())->count();
-        $totalRevenueThisMonth = ParkingExit::whereMonth('exit_time', $today->month)
-                                           ->whereYear('exit_time', $today->year)
-                                           ->sum('parking_fee');
+        $totalEntriesToday = ParkingEntry::whereDate('entry_time', $today->toDateString())
+            ->where('vehicle_type', 'Motor')
+            ->count();
+        $totalRevenueThisMonth = ParkingExit::join('parking_entries', 'parking_exits.parking_entry_id', '=', 'parking_entries.id')
+            ->whereMonth('parking_exits.exit_time', $today->month)
+            ->whereYear('parking_exits.exit_time', $today->year)
+            ->where('parking_entries.vehicle_type', 'Motor')
+            ->sum('parking_exits.parking_fee');
         $totalEntriesThisMonth = ParkingEntry::whereMonth('entry_time', $today->month)
-                                            ->whereYear('entry_time', $today->year)
-                                            ->count();
+            ->whereYear('entry_time', $today->year)
+            ->where('vehicle_type', 'Motor')
+            ->count();
 
         $revenueByVehicleType = ParkingExit::join('parking_entries', 'parking_exits.parking_entry_id', '=', 'parking_entries.id')
                                           ->selectRaw('parking_entries.vehicle_type, COUNT(*) as count, SUM(parking_exits.parking_fee) as total_revenue')
                                           ->whereDate('parking_exits.exit_time', $today->toDateString())
+                                          ->where('parking_entries.vehicle_type', 'Motor')
                                           ->groupBy('parking_entries.vehicle_type')
                                           ->get();
 
@@ -98,9 +115,17 @@ class ParkingManagementController extends Controller
         $statistics = collect();
         for ($i = 6; $i >= 0; $i--) {
             $date = $today->copy()->subDays($i); // Gunakan copy() agar tidak mengubah $today asli
-            $entryCount = ParkingEntry::whereDate('entry_time', $date->toDateString())->count();
-            $exitCount = ParkingExit::whereDate('exit_time', $date->toDateString())->count();
-            $revenue = ParkingExit::whereDate('exit_time', $date->toDateString())->sum('parking_fee');
+            $entryCount = ParkingEntry::whereDate('entry_time', $date->toDateString())
+                ->where('vehicle_type', 'Motor')
+                ->count();
+            $exitCount = ParkingExit::join('parking_entries', 'parking_exits.parking_entry_id', '=', 'parking_entries.id')
+                ->whereDate('parking_exits.exit_time', $date->toDateString())
+                ->where('parking_entries.vehicle_type', 'Motor')
+                ->count();
+            $revenue = ParkingExit::join('parking_entries', 'parking_exits.parking_entry_id', '=', 'parking_entries.id')
+                ->whereDate('parking_exits.exit_time', $date->toDateString())
+                ->where('parking_entries.vehicle_type', 'Motor')
+                ->sum('parking_exits.parking_fee');
 
             $statistics[] = [
                 'date' => $date->format('d M'),
@@ -132,6 +157,7 @@ class ParkingManagementController extends Controller
         $this->authorizeAdmin();
 
         $parkingEntries = ParkingEntry::with(['user:id,name,username', 'qrCode:id,user_id,code,date', 'parkingExit:id,parking_entry_id,exit_time,parking_fee'])
+            ->where('vehicle_type', 'Motor')
             ->orderBy('entry_time', 'desc')
             ->paginate(50);
 
@@ -145,9 +171,11 @@ class ParkingManagementController extends Controller
     {
         $this->authorizeAdmin();
 
-        // Ambil entri parkir dengan user dan parkingExit
-        $parkingEntry = ParkingEntry::with(['user:id,name,username', 'parkingExit:id,parking_entry_id,exit_time,parking_fee'])->findOrFail($id);
-        
+        // Ambil entri parkir dengan user dan parkingExit, hanya untuk kendaraan jenis motor
+        $parkingEntry = ParkingEntry::with(['user:id,name,username', 'parkingExit:id,parking_entry_id,exit_time,parking_fee'])
+            ->where('vehicle_type', 'Motor')
+            ->findOrFail($id);
+
         // Ambil QR code milik user, bukan dari entri parkir (yang bisa saja salah terkait)
         // Kita ambil QR code yang valid untuk user yang sama dan untuk tanggal yang sama
         $qrCode = QrCode::where('user_id', $parkingEntry->user_id)
@@ -171,6 +199,11 @@ class ParkingManagementController extends Controller
             'status' => 'nullable|in:active,completed',
             'vehicle_type' => 'nullable|string|max:255|regex:/^[a-zA-Z0-9\s\-]+$/',
         ]);
+
+        // Jika tidak ada filter vehicle_type yang ditentukan, set ke 'Motor' secara default
+        if (empty($validated['vehicle_type'])) {
+            $validated['vehicle_type'] = 'Motor';
+        }
 
         $query = $this->buildSearchQuery($validated);
         $parkingEntries = $query->paginate(15);
@@ -247,7 +280,7 @@ class ParkingManagementController extends Controller
         $validated = $request->validate([
             'user_id' => 'required|integer|exists:users,id',
             'entry_time' => 'required|date',
-            'vehicle_type' => 'nullable|string|max:255|regex:/^[a-zA-Z0-9\s\-]+$/',
+            'vehicle_type' => 'required|string|max:255|in:Motor', // Hanya Motor yang diperbolehkan
             'vehicle_plate_number' => 'nullable|string|max:50|regex:/^[A-Z0-9\s]+$/',
             'entry_location' => 'nullable|string|max:255',
         ]);
@@ -289,7 +322,9 @@ class ParkingManagementController extends Controller
     {
         $this->authorizeAdmin();
 
-        $parkingEntry = ParkingEntry::with(['user:id,name,username', 'qrCode:id,user_id,code,date', 'parkingExit:id,parking_entry_id,exit_time,parking_fee'])->findOrFail($id);
+        $parkingEntry = ParkingEntry::with(['user:id,name,username', 'qrCode:id,user_id,code,date', 'parkingExit:id,parking_entry_id,exit_time,parking_fee'])
+            ->where('vehicle_type', 'Motor')
+            ->findOrFail($id);
         $users = User::select('id', 'name', 'username')->get();
 
         return view('parking.management.edit', compact('parkingEntry', 'users'));
@@ -305,12 +340,12 @@ class ParkingManagementController extends Controller
         $validated = $request->validate([
             'user_id' => 'required|integer|exists:users,id',
             'entry_time' => 'required|date',
-            'vehicle_type' => 'nullable|string|max:255|regex:/^[a-zA-Z0-9\s\-]+$/',
+            'vehicle_type' => 'required|string|max:255|in:Motor', // Hanya Motor yang diperbolehkan
             'vehicle_plate_number' => 'nullable|string|max:50|regex:/^[A-Z0-9\s]+$/',
             'entry_location' => 'nullable|string|max:255',
         ]);
 
-        $parkingEntry = ParkingEntry::findOrFail($id);
+        $parkingEntry = ParkingEntry::where('vehicle_type', 'Motor')->findOrFail($id);
         $parkingEntry->update([
             'user_id' => $validated['user_id'],
             'entry_time' => $validated['entry_time'],
@@ -329,7 +364,9 @@ class ParkingManagementController extends Controller
     {
         $this->authorizeAdmin();
 
-        $parkingEntry = ParkingEntry::with(['user:id,name,username', 'qrCode:id,user_id,code,date', 'parkingExit:id,parking_entry_id,exit_time,parking_fee'])->findOrFail($id);
+        $parkingEntry = ParkingEntry::with(['user:id,name,username', 'qrCode:id,user_id,code,date', 'parkingExit:id,parking_entry_id,exit_time,parking_fee'])
+            ->where('vehicle_type', 'Motor')
+            ->findOrFail($id);
 
         if ($parkingEntry->parkingExit) {
             return redirect()->back()->with('error', 'Entri ini sudah memiliki catatan keluar.');
@@ -380,7 +417,9 @@ class ParkingManagementController extends Controller
     {
         $this->authorizeAdmin();
 
-        $parkingEntry = ParkingEntry::with(['user:id,name,username'])->findOrFail($id);
+        $parkingEntry = ParkingEntry::with(['user:id,name,username'])
+            ->where('vehicle_type', 'Motor')
+            ->findOrFail($id);
 
         // Cek apakah sudah keluar
         if ($parkingEntry->parkingExit) {
@@ -434,7 +473,7 @@ class ParkingManagementController extends Controller
     {
         $this->authorizeAdmin();
 
-        $parkingEntry = ParkingEntry::findOrFail($id);
+        $parkingEntry = ParkingEntry::where('vehicle_type', 'Motor')->findOrFail($id);
 
         // Hapus entri keluar terlebih dahulu jika ada
         if ($parkingEntry->parkingExit) {

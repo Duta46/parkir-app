@@ -185,12 +185,10 @@
                 
                 <div class="col-md-2">
                     <label class="form-label">Jenis Kendaraan</label>
-                    <select name="vehicle_type" class="form-select">
-                        <option value="">Semua Jenis</option>
-                        <option value="Mobil" {{ request('vehicle_type') == 'Mobil' ? 'selected' : '' }}>Mobil</option>
-                        <option value="Motor" {{ request('vehicle_type') == 'Motor' ? 'selected' : '' }}>Motor</option>
-                        <option value="Truk" {{ request('vehicle_type') == 'Truk' ? 'selected' : '' }}>Truk</option>
+                    <select name="vehicle_type" class="form-select" disabled>
+                        <option value="Motor" selected>Motor</option>
                     </select>
+                    <input type="hidden" name="vehicle_type" value="Motor">
                 </div>
                 
                 <div class="col-md-2">
